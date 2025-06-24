@@ -45,7 +45,7 @@ For technical support and integration assistance:
 
 ## License
 
-Copyright (c) 2025 NovaComat
+Copyright (c) 2025 novacom software GmbH
 
 Permission is hereby granted to implement this API specification for the sole 
 purpose of integrating with NovaTouch® POS systems. 
