@@ -18,7 +18,7 @@ The NovaTouch® Partner.Connect API enables seamless integration between NovaTou
 - **Version:** 1.0.0
 - **Authentication:** Basic Auth
 - **Contact:** partner-connect@novacom.at
-- **Website:** https://www.novacomat.at
+- **Website:** https://www.novacom.at
 
 ### Required Endpoints
 Your server must implement both endpoints:
