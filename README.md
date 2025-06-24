@@ -45,7 +45,7 @@ For technical support and integration assistance:
 
 ## License
 
-Copyright (c) 2025 novacom software GmbH
+Copyright (c) 2025 novacom software GmbH.
 Please contact partner-connect@novacom.at for further licensing details.
 
 RESTRICTIONS:
