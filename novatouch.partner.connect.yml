@@ -5,8 +5,8 @@ info:
   version: 1.0.0
   contact:
     name: NovaTouch® Partner.Connect Support
-    email: office@novacom.at
-    url: https://github.com/novacom-software-gmbh/nt3-partner-connect-api
+    email: partner-connect@novacom.at
+    url: https://partner-connect.novacom.at
 servers:
   - url: https://api.example.com/v1
     description: Partner's production server
