@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: NovaTouch® Partner.Connect API
+  description: REST API for NovaTouch® Partner.Connect POS system. Partners implementing this API create the server side, and NovaTouch POS systems will connect to the partner's server as clients.
+  version: 1.0.0
+  contact:
+    name: NovaTouch® Partner.Connect Support
+    email: office@novacom.at
+    url: https://github.com/novacom-software-gmbh/nt3-partner-connect-api
+servers:
+  - url: https://api.example.com/v1
+    description: Partner's production server
+  - url: https://api-test.example.com/v1
+    description: Partner's test server
+security:
+  - basicAuth: []
+paths:
+  /mediums:
+    post:
+      summary: Get Mediums
+      description: Retrieves medium information based on the provided medium identifiers and optional search criteria
+      operationId: getMediums
+      tags:
+        - Mediums
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetMediumsRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMediumsResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /bookings:
+    post:
+      summary: Create Booking
+      description: Creates a booking for a medium with the specified items and payments, or transfers revenue information without a medium. For cancellations, send the exact same data as the original booking with isCancellation=true. Medium information comes from the payments array.
+      operationId: createBooking
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookMediumRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookMediumResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication using username and password
+  schemas:
+    StatusType:
+      type: string
+      enum:
+        - UNKNOWN
+        - OK
+        - ERROR
+        - WARNING
+      description: Status type. ERROR if request failed, WARNING if successful but with potential issues, OK if fully successful
+      default: UNKNOWN
+    StatusMessageType:
+      type: string
+      enum:
+        - UNKNOWN
+        - SUCCESS
+        - ERROR
+        - ERROR_AUTH
+        - ERROR_AUTH_USER_NOT_FOUND
+        - ERROR_AUTH_PASSWORD_INVALID
+        - ERROR_PARAMETER
+        - ERROR_PARAMETER_MISSING
+        - ERROR_PARAMETER_INVALID
+        - ERROR_MEDIUM_NOT_ALLOWED
+        - ERROR_MEDIUM_INSUFFICIENT_BALANCE
+        - ERROR_MEDIUM_DOES_NOT_EXIST
+        - ERROR_MEDIUM_NOT_ACTIVATED
+      default: UNKNOWN
+    MediumType:
+      type: string
+      enum:
+        - UNKNOWN
+        - VOUCHER
+        - ACCESS
+        - MEMBER
+        - HOTEL
+        - PREPAID
+      default: UNKNOWN
+    InputType:
+      type: string
+      enum:
+        - UNKNOWN
+        - MANUAL
+        - VISUAL
+        - NFC
+        - QR
+      default: UNKNOWN
+    TaxType:
+      type: string
+      enum:
+        - UNKNOWN
+        - NORMAL
+        - DISCOUNTED1
+        - DISCOUNTED2
+        - SPECIAL1
+        - SPECIAL2
+        - NOT_TAXABLE
+        - ZERO
+        - CONSUMPTION
+      default: UNKNOWN
+    MediumBookingType:
+      type: string
+      enum:
+        - DEBIT
+        - CREDIT
+      description: Type of booking operation. DEBIT withdraws money from a medium (spending existing credit), CREDIT adds funds to a medium for later use
+    Status:
+      type: object
+      required:
+        - type
+        - messageType
+        - message
+      properties:
+        type:
+          $ref: '#/components/schemas/StatusType'
+        messageType:
+          $ref: '#/components/schemas/StatusMessageType'
+        message:
+          type: string
+          description: Human-readable status message
+    Balance:
+      type: object
+      properties:
+        currency:
+          type: string
+          description: Currency code (e.g., EUR, USD)
+        amount:
+          type: number
+          format: double
+          description: Current balance amount
+        debitLimit:
+          type: number
+          format: double
+          description: Maximum amount that can be added to the medium (positive value)
+        creditLimit:
+          type: number
+          format: double
+          description: Maximum amount that can be spent beyond zero balance (positive value, total spendable = balance + creditLimit)
+    Owner:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Owner identifier
+        title:
+          type: string
+          description: Title (e.g., Mr., Ms., Dr.)
+        firstName:
+          type: string
+          description: First name
+        lastName:
+          type: string
+          description: Last name
+        street:
+          type: string
+          description: Street address
+        city:
+          type: string
+          description: City
+        zip:
+          type: string
+          description: ZIP/Postal code
+        country:
+          type: string
+          description: Country code
+    Medium:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Id of the medium (e.g. reservation number for hotel, chip id for access partner, QR code for voucher etc.)
+        name:
+          type: string
+          description: Medium name
+        balance:
+          $ref: '#/components/schemas/Balance'
+        type:
+          $ref: '#/components/schemas/MediumType'
+        discountId:
+          type: string
+          description: Discount id to apply for this medium
+        grantId:
+          type: string
+          description: Grant id to apply for this medium
+        priceLevelId:
+          type: string
+          description: Price level id to apply for this medium
+        paymentTypeId:
+          type: string
+          description: Payment type id assigned to this medium
+        activationDate:
+          type: string
+          format: date-time
+          description: Medium activation date in ISO 8601 format (e.g. medium is active from, room is checked in from...)
+          example: "2024-03-15T10:30:00Z"
+        expirationDate:
+          type: string
+          format: date-time
+          description: Medium expiration date in ISO 8601 format (e.g. medium expires on, room is checked out on...)
+          example: "2024-03-20T12:00:00Z"
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/Owner'
+          description: Owner(s) of the medium
+        data:
+          type: string
+          description: Additional partner specific data as JSON string (JSON object serialized as string)
+          example: "{\"roomNumber\":\"405\",\"guestCount\":2}"
+        inputType:
+          $ref: '#/components/schemas/InputType'
+        templateId:
+          type: string
+          description: Template/group identifier (e.g., 50€ voucher, 100€ voucher, child access pass)
+        useMediumId:
+          type: string
+          description: Alternative medium ID to use when redirecting to another partner (e.g., room number when spa chip redirects to hotel system). Empty string if no redirection needed.
+        usePartnerId:
+          type: string
+          description: Partner ID that should handle this medium (e.g., hotel system for spa access). Empty string if no redirection needed. If omitted but useMediumId is provided, partner can be mapped in NovaTouch
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Article identifier
+        name:
+          type: string
+          description: Article name
+        groupId:
+          type: string
+          description: Article group identifier
+        quantity:
+          type: number
+          format: double
+          description: Quantity of items (sent as negative value for CancelMediumBookings)
+        amount:
+          type: number
+          format: double
+          description: Price per single item (without discount)
+        discount:
+          type: number
+          format: double
+          description: Total discount for these items
+        taxPercent:
+          type: number
+          format: double
+          description: Tax percentage rate (e.g., 19 for 19%)
+        currency:
+          type: string
+          description: Currency code
+        taxType:
+          $ref: '#/components/schemas/TaxType'
+    Payment:
+      type: object
+      description: Payment information. Must include EITHER id (for standard payment methods like cash/card) OR medium (for payment via medium), but not both.
+      properties:
+        id:
+          type: string
+          description: Payment type identifier for standard payment methods (e.g., cash, credit card). Do not use if medium is provided.
+        amount:
+          type: number
+          format: double
+          description: Amount paid using this payment type (e.g. 100€ cash, 10€ credit card)
+        medium:
+          allOf:
+            - $ref: '#/components/schemas/MediumInput'
+            - description: Medium used for payment. Do not use if paymentTypeId is provided.
+        currency:
+          type: string
+          description: Currency code
+    MediumInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Id of the medium to search for or book
+        type:
+          $ref: '#/components/schemas/MediumType'
+        data:
+          type: string
+          description: Reserved for optional additional data provided in JSON format
+        inputType:
+          $ref: '#/components/schemas/InputType'
+    GetMediumsRequest:
+      type: object
+      required:
+        - mediums
+      properties:
+        clientId:
+          type: string
+          description: Optional client identifier for multi-tenant systems where partner serves multiple clients
+        mediums:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediumInput'
+          description: Medium search criteria - only id, type, data, and inputType are used
+        searchData:
+          type: string
+          description: Additional search data as JSON string for the medium (e.g. {\"roomNumber\":\"123\",\"guestName\":\"Smith\"})
+    GetMediumsResponse:
+      type: object
+      required:
+        - status
+        - mediums
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        mediums:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medium'
+          description: Retrieved mediums
+    BookMediumRequest:
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: Optional client identifier for multi-tenant systems where partner serves multiple clients
+        bookingType:
+          $ref: '#/components/schemas/MediumBookingType'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+          description: Payments for the booking
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+          description: Items to book
+        invoiceId:
+          type: string
+          description: Invoice id from POS
+        transactionId:
+          type: string
+          description: Transaction id from POS
+        isCancellation:
+          type: boolean
+          description: If true, this is a cancellation of a previous booking. Send exactly the same data as the original booking with this flag set
+    BookMediumResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        medium:
+          allOf:
+            - $ref: '#/components/schemas/Medium'
+            - description: Updated medium with new balance after booking
+        invoiceId:
+          type: string
+          description: Invoice id from partner
+        transactionId:
+          type: string
+          description: Transaction id from partner
+tags:
+  - name: Mediums
+    description: Operations related to medium search and validation
+  - name: Bookings
+    description: Operations for creating bookings and revenue transfers
