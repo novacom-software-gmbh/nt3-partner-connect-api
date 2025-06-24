@@ -45,4 +45,16 @@ For technical support and integration assistance:
 
 ## License
 
-Please refer to your NovaTouch® Partner Connect agreement for licensing terms and conditions.
+Copyright (c) 2025 NovaComat
+
+Permission is hereby granted to implement this API specification for the sole 
+purpose of integrating with NovaTouch® POS systems. 
+
+RESTRICTIONS:
+- You may NOT copy, modify, or distribute this specification
+- You may NOT use this specification for purposes other than NovaTouch® integration
+- You may NOT create derivative works based on this specification
+- Implementation must comply with official NovaTouch® Partner agreements
+
+This specification is provided "AS IS" without warranty of any kind.
+For licensing inquiries, contact: partner-connect@novacom.at
