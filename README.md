@@ -41,14 +41,12 @@ Your server must implement both endpoints:
 For technical support and integration assistance:
 
 - **Email:** partner-connect@novacom.at
-- **Website:** https://www.novacomat.at
+- **Website:** https://www.novacom.at
 
 ## License
 
 Copyright (c) 2025 novacom software GmbH
-
-Permission is hereby granted to implement this API specification for the sole 
-purpose of integrating with NovaTouch® POS systems. 
+Please contact partner-connect@novacom.at for further licensing details.
 
 RESTRICTIONS:
 - You may NOT copy, modify, or distribute this specification
