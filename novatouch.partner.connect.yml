@@ -243,7 +243,7 @@ components:
           $ref: '#/components/schemas/InputType'
         templateId:
           type: string
-          description: Template/group identifier (e.g., 50€ voucher, 100€ voucher, child access pass)
+          description: Template/group identifier (e.g., 50 Euro voucher, 100 Euro voucher, child access pass)
         useMediumId:
           type: string
           description: Alternative medium ID to use when redirecting to another partner (e.g., room number when spa chip redirects to hotel system). Empty string if no redirection needed.
