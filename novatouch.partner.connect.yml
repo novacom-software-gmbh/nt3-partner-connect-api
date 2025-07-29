@@ -131,6 +131,7 @@ components:
     MediumBookingType:
       type: string
       enum:
+        - UNKNOWN
         - DEBIT
         - CREDIT
       description: Type of booking operation. DEBIT withdraws money from a medium (spending existing credit), CREDIT adds funds to a medium for later use
