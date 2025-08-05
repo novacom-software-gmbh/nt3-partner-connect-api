@@ -297,7 +297,7 @@ components:
         amount:
           type: number
           format: double
-          description: Amount paid using this payment type (e.g. 100€ cash, 10€ credit card)
+          description: Amount paid using this payment type (e.g. 100 Euro cash, 10 Euro credit card)
         medium:
           allOf:
             - $ref: '#/components/schemas/MediumInput'
