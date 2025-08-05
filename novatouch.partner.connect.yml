@@ -284,6 +284,9 @@ components:
           description: Currency code
         taxType:
           $ref: '#/components/schemas/TaxType'
+        isTip:
+          type: boolean
+          description: Indicates whether this item represents a tip
     Payment:
       type: object
       description: Payment information. Must include EITHER id (for standard payment methods like cash/card) OR medium (for payment via medium), but not both.
@@ -302,6 +305,9 @@ components:
         currency:
           type: string
           description: Currency code
+        isTip:
+          type: boolean
+          description: Indicates whether this payment represents a tip
     MediumInput:
       type: object
       required:
