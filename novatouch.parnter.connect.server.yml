@@ -1,0 +1,5594 @@
+openapi: 3.0.3
+info:
+  title: POS API
+  description: Point of Sale API for managing orders, invoices, and system operations
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+    url: https://example.com/support
+
+servers:
+  - url: https://api.example.com/api/v1
+    description: Production server (placeholder - update with actual server URL)
+
+tags:
+  - name: Authentication
+    description: Device authorization and user authentication endpoints
+  - name: System
+    description: System management, health checks, and logging configuration endpoints
+  - name: Base Data
+    description: Master data endpoints for points of sale, users, menus, articles, and other configuration data
+  - name: Booking
+    description: Order management, invoicing, and display order endpoints
+  - name: Partner
+    description: Partner integrations for hotel, access control, voucher systems, and medium management
+  - name: Fiscalization
+    description: Fiscal compliance, tax reporting, and regulatory requirements
+
+security:
+  - AuthorizationToken: []
+  - LoginToken: []
+
+paths:
+  # ============================================================================
+  # SYSTEM ENDPOINTS
+  # ============================================================================
+
+  /check/service:
+    get:
+      tags:
+        - System
+      summary: Check service health
+      description: Performs a health check on the POS service to verify it is operational and responding.
+      operationId: checkService
+      security: []
+      responses:
+        '200':
+          description: Service health check response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckServiceResponse'
+        '500':
+          description: Internal server error - service unavailable
+
+  /system/changepointofsale:
+    post:
+      tags:
+        - System
+      summary: Change point of sale
+      description: Changes the active point of sale for the current session. Returns a new login token with updated permissions for the new point of sale.
+      operationId: changePointOfSale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePointOfSaleRequest'
+      responses:
+        '200':
+          description: Point of sale change response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePointOfSaleResponse'
+        '400':
+          description: Bad request - invalid point of sale ID
+        '401':
+          description: Unauthorized - invalid or missing token
+        '403':
+          description: Forbidden - insufficient permissions for requested point of sale
+        '404':
+          description: Not found - point of sale does not exist
+        '500':
+          description: Internal server error
+
+  /system/setloglevel:
+    post:
+      tags:
+        - System
+      summary: Set log level
+      description: Updates the log level for a specified log type. This controls the verbosity of logging for debugging and monitoring purposes.
+      operationId: setLogLevel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetLogLevelRequest'
+      responses:
+        '200':
+          description: Log level updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetLogLevelResponse'
+        '400':
+          description: Bad request - invalid log type or level
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - insufficient permissions
+        '500':
+          description: Internal server error
+
+  /system/getloglevel:
+    post:
+      tags:
+        - System
+      summary: Get log level
+      description: Retrieves the current log level setting for a specified log type.
+      operationId: getLogLevel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLogLevelRequest'
+      responses:
+        '200':
+          description: Current log level for the specified log type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLogLevelResponse'
+        '400':
+          description: Bad request - invalid log type
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /system/addlogentry:
+    post:
+      tags:
+        - System
+      summary: Add log entry
+      description: Adds a new log entry to the system logs. Useful for client-side logging that needs to be centralized with server logs.
+      operationId: addLogEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLogEntryRequest'
+      responses:
+        '200':
+          description: Log entry added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddLogEntryResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # ============================================================================
+  # AUTHENTICATION ENDPOINTS
+  # ============================================================================
+
+  /authorization/authorize:
+    post:
+      tags:
+        - Authentication
+      summary: Authorize device
+      description: |
+        Authorizes a device to use the POS system. Returns an authorization token containing:
+        - Permissions for this device
+        - Customer ID
+        - Client ID
+      operationId: authorize
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeRequest'
+      responses:
+        '200':
+          description: Authorization response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized - invalid API key
+        '500':
+          description: Internal server error
+
+  /authorization/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: |
+        Logs in a user to the POS system. Returns a login token containing:
+        - User permissions for the logged in user
+        - User ID
+      operationId: login
+      security:
+        - AuthorizationToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized - invalid credentials
+        '500':
+          description: Internal server error
+
+  /authorization/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Logs out the currently authenticated user from the POS system.
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logout response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # ============================================================================
+  # BASE DATA ENDPOINTS
+  # ============================================================================
+
+  /basedata/getpointsofsale:
+    post:
+      tags:
+        - Base Data
+      summary: Get points of sale
+      description: Retrieves a list of points of sale. Can be filtered by specific point of sale IDs.
+      operationId: getPointsOfSale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPointsOfSaleRequest'
+      responses:
+        '200':
+          description: List of points of sale
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPointsOfSaleResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getusers:
+    post:
+      tags:
+        - Base Data
+      summary: Get users
+      description: Retrieves a list of users. Can be filtered by specific user IDs.
+      operationId: getUsers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetUsersRequest'
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUsersResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getoutlets:
+    post:
+      tags:
+        - Base Data
+      summary: Get outlets
+      description: Retrieves a list of outlets (service areas). Can be filtered by specific outlet IDs.
+      operationId: getOutlets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOutletsRequest'
+      responses:
+        '200':
+          description: List of outlets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOutletsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getdiscounts:
+    post:
+      tags:
+        - Base Data
+      summary: Get discounts
+      description: Retrieves a list of available discounts. Can be filtered by specific discount IDs.
+      operationId: getDiscounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDiscountsRequest'
+      responses:
+        '200':
+          description: List of discounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDiscountsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getcoursegroups:
+    post:
+      tags:
+        - Base Data
+      summary: Get course groups
+      description: Retrieves a list of course groups with their associated courses. Can be filtered by specific course group IDs.
+      operationId: getCourseGroups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCourseGroupsRequest'
+      responses:
+        '200':
+          description: List of course groups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCourseGroupsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/gettransactiontypes:
+    post:
+      tags:
+        - Base Data
+      summary: Get transaction types
+      description: Retrieves a list of transaction types. Can be filtered by specific transaction type IDs or by order assignment.
+      operationId: getTransactionTypes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionTypesRequest'
+      responses:
+        '200':
+          description: List of transaction types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTransactionTypesResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getpaymenttypes:
+    post:
+      tags:
+        - Base Data
+      summary: Get payment types
+      description: Retrieves a list of payment types (cash, card, etc.). Can be filtered by specific payment type IDs.
+      operationId: getPaymentTypes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPaymentTypesRequest'
+      responses:
+        '200':
+          description: List of payment types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPaymentTypesResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getreceiptprinters:
+    post:
+      tags:
+        - Base Data
+      summary: Get receipt printers
+      description: Retrieves a list of available receipt printers. Can be filtered by specific printer IDs.
+      operationId: getReceiptPrinters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetReceiptPrintersRequest'
+      responses:
+        '200':
+          description: List of receipt printers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetReceiptPrintersResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getarticles:
+    post:
+      tags:
+        - Base Data
+      summary: Get articles
+      description: Retrieves a list of articles (products). Can be filtered by article IDs or codes (EAN, barcode). Prices are determined by the optional order/payment context.
+      operationId: getArticles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetArticlesRequest'
+      responses:
+        '200':
+          description: List of articles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArticlesResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getcancellationreasons:
+    post:
+      tags:
+        - Base Data
+      summary: Get cancellation reasons
+      description: Retrieves a list of cancellation reasons that can be used when voiding items or orders.
+      operationId: getCancellationReasons
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCancellationReasonsRequest'
+      responses:
+        '200':
+          description: List of cancellation reasons
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCancellationReasonsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/setfavoritesmenu:
+    post:
+      tags:
+        - Base Data
+      summary: Set favorites menu
+      description: Sets the favorites menu items for the current user. These items will appear in the user's favorites menu for quick access.
+      operationId: setFavoritesMenu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetFavoritesMenuRequest'
+      responses:
+        '200':
+          description: Favorites menu updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetFavoritesMenuResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /basedata/getmenus:
+    post:
+      tags:
+        - Base Data
+      summary: Get menus
+      description: Retrieves a list of menus including home menus and modifier menus. Prices are determined by the optional order/payment context.
+      operationId: getMenus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetMenusRequest'
+      responses:
+        '200':
+          description: List of menus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMenusResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # ============================================================================
+  # BOOKING ENDPOINTS
+  # ============================================================================
+
+  /booking/getorders:
+    post:
+      tags:
+        - Booking
+      summary: Get orders
+      description: Retrieves a list of orders. Can be filtered by order IDs, sub-order IDs, outlet IDs, or user IDs.
+      operationId: getOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrdersRequest'
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrdersResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /booking/getorderitems:
+    post:
+      tags:
+        - Booking
+      summary: Get order items
+      description: Retrieves all items for a specific order, including pricing and discount information.
+      operationId: getOrderItems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrderItemsRequest'
+      responses:
+        '200':
+          description: List of order items with totals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderItemsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/openorder:
+    post:
+      tags:
+        - Booking
+      summary: Open order
+      description: Opens an existing order or creates a new one. Can optionally associate the order with a partner (e.g., hotel room).
+      operationId: openOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenOrderRequest'
+      responses:
+        '200':
+          description: Order opened or created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenOrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/closeorder:
+    post:
+      tags:
+        - Booking
+      summary: Close order
+      description: Closes an open order, releasing it for other users or archiving it.
+      operationId: closeOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseOrderRequest'
+      responses:
+        '200':
+          description: Order closed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloseOrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/adoptorder:
+    post:
+      tags:
+        - Booking
+      summary: Adopt order
+      description: Takes ownership of an order from another user.
+      operationId: adoptOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdoptOrderRequest'
+      responses:
+        '200':
+          description: Order adopted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdoptOrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - cannot adopt this order
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/bookorderitems:
+    post:
+      tags:
+        - Booking
+      summary: Book order items
+      description: Adds items to an order. Price levels can be determined by the optional payment type.
+      operationId: bookOrderItems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookOrderItemsRequest'
+      responses:
+        '200':
+          description: Items booked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookOrderItemsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/createinvoice:
+    post:
+      tags:
+        - Booking
+      summary: Create invoice
+      description: Creates an invoice for an order with specified payments and items. Can optionally specify a transaction type (no payments allowed in that case).
+      operationId: createInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceRequest'
+      responses:
+        '200':
+          description: Invoice created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/splitorder:
+    post:
+      tags:
+        - Booking
+      summary: Split order
+      description: Splits items from one order to one or more target orders. Can split by amount, divider, or specific items.
+      operationId: splitOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitOrderRequest'
+      responses:
+        '200':
+          description: Order split successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitOrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/moveorder:
+    post:
+      tags:
+        - Booking
+      summary: Move order
+      description: Moves all items from one order to another order.
+      operationId: moveOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveOrderRequest'
+      responses:
+        '200':
+          description: Order moved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveOrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/calculateprices:
+    post:
+      tags:
+        - Booking
+      summary: Calculate prices
+      description: Calculates prices for items based on order context, payment type, discounts, grants, and price levels.
+      operationId: calculatePrices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculatePricesRequest'
+      responses:
+        '200':
+          description: Prices calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculatePricesResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /booking/assignordertopartnermedium:
+    post:
+      tags:
+        - Booking
+      summary: Assign order to partner medium
+      description: Assigns an order to a partner medium (e.g., hotel room, loyalty card). Can be permanent or temporary.
+      operationId: assignOrderToPartnerMedium
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignOrderToPartnerMediumRequest'
+      responses:
+        '200':
+          description: Order assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignOrderToPartnerMediumResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order or medium not found
+        '500':
+          description: Internal server error
+
+  /booking/getinvoices:
+    post:
+      tags:
+        - Booking
+      summary: Get invoices
+      description: Retrieves full invoice details including items and payments. Can be filtered by user IDs or invoice IDs.
+      operationId: getInvoices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetInvoicesRequest'
+      responses:
+        '200':
+          description: List of invoices with full details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvoicesResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /booking/getinvoicelist:
+    post:
+      tags:
+        - Booking
+      summary: Get invoice list
+      description: Retrieves a lightweight list of invoices. Can be filtered by date range, user IDs, or invoice IDs.
+      operationId: getInvoiceList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetInvoiceListRequest'
+      responses:
+        '200':
+          description: List of invoices (lightweight)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvoiceListResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /booking/cancelinvoice:
+    post:
+      tags:
+        - Booking
+      summary: Cancel invoice
+      description: Cancels an existing invoice and optionally rebooks items to a new order.
+      operationId: cancelInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelInvoiceRequest'
+      responses:
+        '200':
+          description: Invoice cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelInvoiceResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Invoice not found
+        '500':
+          description: Internal server error
+
+  /booking/createinvoicetransactionid:
+    post:
+      tags:
+        - Booking
+      summary: Create invoice transaction ID
+      description: Creates a unique transaction ID for an invoice, typically used for payment processing.
+      operationId: createInvoiceTransactionId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceTransactionIdRequest'
+      responses:
+        '200':
+          description: Transaction ID created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceTransactionIdResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /booking/printinvoice:
+    post:
+      tags:
+        - Booking
+      summary: Print invoice
+      description: Prints an invoice to a receipt printer. Can be a reprint of an existing invoice.
+      operationId: printInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrintInvoiceRequest'
+      responses:
+        '200':
+          description: Invoice printed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintInvoiceResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Invoice or printer not found
+        '500':
+          description: Internal server error
+
+  /booking/printinvoicepreview:
+    post:
+      tags:
+        - Booking
+      summary: Print invoice preview
+      description: Prints a preview of an invoice (before it is finalized) to a receipt printer.
+      operationId: printInvoicePreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrintInvoicePreviewRequest'
+      responses:
+        '200':
+          description: Invoice preview printed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintInvoicePreviewResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order or printer not found
+        '500':
+          description: Internal server error
+
+  /booking/updateorderinfo:
+    post:
+      tags:
+        - Booking
+      summary: Update order info
+      description: Updates order metadata such as name, guest count, outlet, and partner data.
+      operationId: updateOrderInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderInfoRequest'
+      responses:
+        '200':
+          description: Order info updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateOrderInfoResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /booking/getdisplayorders:
+    post:
+      tags:
+        - Booking
+      summary: Get display orders
+      description: Retrieves orders for kitchen/bar displays. Can be filtered by outlet, article group, order IDs, or order states.
+      operationId: getDisplayOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDisplayOrdersRequest'
+      responses:
+        '200':
+          description: List of display orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDisplayOrdersResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /booking/updatedisplayorderitem:
+    post:
+      tags:
+        - Booking
+      summary: Update display order item
+      description: Updates the state of an order item on a display (e.g., mark as in progress, ready).
+      operationId: updateDisplayOrderItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDisplayOrderItemRequest'
+      responses:
+        '200':
+          description: Display order item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDisplayOrderItemResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order item not found
+        '500':
+          description: Internal server error
+
+  /booking/deletedisplayorderitem:
+    post:
+      tags:
+        - Booking
+      summary: Delete display order item
+      description: Removes an order item from the display (e.g., when picked up).
+      operationId: deleteDisplayOrderItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDisplayOrderItemRequest'
+      responses:
+        '200':
+          description: Display order item deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDisplayOrderItemResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order item not found
+        '500':
+          description: Internal server error
+
+  # ============================================================================
+  # PARTNER ENDPOINTS
+  # ============================================================================
+
+  /partner/getpartners:
+    post:
+      tags:
+        - Partner
+      summary: Get partners
+      description: Retrieves a list of partners (hotel, access, voucher systems). Can be filtered by partner IDs or system type.
+      operationId: getPartners
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPartnersRequest'
+      responses:
+        '200':
+          description: List of partners
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPartnersResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /partner/getmediums:
+    post:
+      tags:
+        - Partner
+      summary: Get mediums
+      description: |
+        Retrieves mediums (cards, reservations, vouchers) from a partner.
+        
+        Supported search data by partner type:
+        - **HOTEL**: name, roomNumber, filter.roomNumbers[]
+        - **ACCESS**: cardNumber
+      operationId: getMediums
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetMediumsRequest'
+      responses:
+        '200':
+          description: List of mediums
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMediumsResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Partner not found
+        '500':
+          description: Internal server error
+
+  /partner/bookmedium:
+    post:
+      tags:
+        - Partner
+      summary: Book medium
+      description: Books a transaction against a medium (e.g., charge to room, redeem voucher, debit loyalty card).
+      operationId: bookMedium
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookMediumRequest'
+      responses:
+        '200':
+          description: Medium booking result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookMediumResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '402':
+          description: Payment required - insufficient balance
+        '404':
+          description: Partner or medium not found
+        '500':
+          description: Internal server error
+
+  # ============================================================================
+  # FISCALIZATION ENDPOINTS
+  # ============================================================================
+
+  /fiscalization/fiscalizeinvoice:
+    post:
+      tags:
+        - Fiscalization
+      summary: Fiscalize invoice
+      description: Submits an invoice for fiscalization to comply with local tax regulations.
+      operationId: fiscalizeInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalizeInvoiceRequest'
+      responses:
+        '200':
+          description: Invoice fiscalized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalizeInvoiceResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Invoice not found
+        '500':
+          description: Internal server error
+
+  /fiscalization/fiscalizeorder:
+    post:
+      tags:
+        - Fiscalization
+      summary: Fiscalize order
+      description: Submits an order for fiscalization (for jurisdictions requiring order-level fiscalization).
+      operationId: fiscalizeOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalizeOrderRequest'
+      responses:
+        '200':
+          description: Order fiscalized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalizeOrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /fiscalization/getfiscaljournal:
+    post:
+      tags:
+        - Fiscalization
+      summary: Get fiscal journal
+      description: Exports the fiscal journal for a date range. Returns a location where the export can be retrieved.
+      operationId: getFiscalJournal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFiscalJournalRequest'
+      responses:
+        '200':
+          description: Fiscal journal export location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFiscalJournalResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /fiscalization/getcustomerfiscaldata:
+    post:
+      tags:
+        - Fiscalization
+      summary: Get customer fiscal data
+      description: Retrieves customer fiscal data (VAT ID, tax ID, address) from a fiscal provider.
+      operationId: getCustomerFiscalData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCustomerFiscalDataRequest'
+      responses:
+        '200':
+          description: Customer fiscal data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCustomerFiscalDataResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+        '500':
+          description: Internal server error
+
+  /fiscalization/executefiscalcommand:
+    post:
+      tags:
+        - Fiscalization
+      summary: Execute fiscal command
+      description: Executes a fiscal command such as daily closing, monthly closing, or other regulatory operations.
+      operationId: executeFiscalCommand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteFiscalCommandRequest'
+      responses:
+        '200':
+          description: Fiscal command executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteFiscalCommandResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /fiscalization/getinvoicefiscalqueue:
+    post:
+      tags:
+        - Fiscalization
+      summary: Get invoice fiscal queue
+      description: Retrieves the fiscalization queue for invoices. Can be filtered by invoice IDs, status, or date range.
+      operationId: getInvoiceFiscalQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetInvoiceFiscalQueueRequest'
+      responses:
+        '200':
+          description: Invoice fiscal queue items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvoiceFiscalQueueResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /fiscalization/getorderfiscalqueue:
+    post:
+      tags:
+        - Fiscalization
+      summary: Get order fiscal queue
+      description: Retrieves the fiscalization queue for orders. Can be filtered by order IDs, status, or date range.
+      operationId: getOrderFiscalQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrderFiscalQueueRequest'
+      responses:
+        '200':
+          description: Order fiscal queue items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderFiscalQueueResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    AuthorizationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Device authorization token obtained from the /authorization/authorize endpoint
+
+    LoginToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User login token obtained from the /authorization/login endpoint
+
+  schemas:
+    # ==========================================================================
+    # COMMON SCHEMAS
+    # ==========================================================================
+
+    Status:
+      type: object
+      description: Standard status response included in all API responses
+      properties:
+        code:
+          type: integer
+          description: Status code (0 for success, non-zero for errors)
+          example: 0
+        message:
+          type: string
+          description: Human-readable status message
+          example: "Success"
+      required:
+        - code
+
+    Header:
+      type: object
+      description: Standard request header included in authenticated requests
+      properties:
+        authorizationToken:
+          type: string
+          description: Device authorization token
+        loginToken:
+          type: string
+          description: User login token
+        timestamp:
+          type: string
+          format: date-time
+          description: Request timestamp in ISO 8601 format
+      required:
+        - authorizationToken
+
+    BinaryData:
+      type: object
+      description: Binary data container (e.g., image, audio)
+      properties:
+        type:
+          $ref: '#/components/schemas/BinaryType'
+        byteData:
+          type: string
+          format: byte
+          description: Binary data as base64 encoded string
+          example: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        stringData:
+          type: string
+          description: String representation of the data (e.g., URL, path)
+          example: "https://example.com/images/burger.png"
+        data:
+          type: string
+          description: Additional information as JSON format
+          example: '{"width": 200, "height": 200}'
+      required:
+        - type
+
+    ModifierFunction:
+      type: object
+      description: Preselection modifier with a defined factor
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the modifier
+          example: "modifier-extra"
+        name:
+          type: string
+          description: Display name of the modifier
+          example: "Extra"
+        factor:
+          type: number
+          format: double
+          description: Factor to apply (e.g., 0.5 for half, 2.0 for double)
+          example: 1.5
+
+    # ==========================================================================
+    # AUTHENTICATION SCHEMAS
+    # ==========================================================================
+
+    AuthorizeRequest:
+      type: object
+      description: Request to authorize a device
+      properties:
+        apiKey:
+          type: string
+          description: API key for device authorization
+          example: "ak_live_xxxxxxxxxxxxx"
+        deviceData:
+          type: string
+          description: Device information in JSON format
+          example: '{"deviceId": "device-001", "model": "iPad Pro", "os": "iOS 17"}'
+      required:
+        - apiKey
+
+    AuthorizeResponse:
+      type: object
+      description: Response from device authorization
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        authorizationToken:
+          type: string
+          description: JWT token containing device permissions, customer ID, and client ID
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        clientId:
+          type: string
+          description: Unique identifier for the client
+          example: "client-001"
+        customerId:
+          type: string
+          description: Unique identifier for the customer
+          example: "cust-001"
+        pointsOfSale:
+          type: array
+          description: List of points of sale available for this device
+          items:
+            $ref: '#/components/schemas/PointOfSale'
+        users:
+          type: array
+          description: List of users that can log in on this device
+          items:
+            $ref: '#/components/schemas/User'
+      required:
+        - status
+
+    LoginRequest:
+      type: object
+      description: Request to log in a user
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        userId:
+          type: string
+          description: Unique identifier of the user
+          example: "user-001"
+        password:
+          type: string
+          format: password
+          description: User password (plaintext or hashed depending on configuration)
+          example: "********"
+        pointOfSaleId:
+          type: string
+          description: Point of sale to log in to
+          example: "pos-001"
+      required:
+        - header
+        - userId
+        - password
+        - pointOfSaleId
+
+    LoginResponse:
+      type: object
+      description: Response from user login
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        loginToken:
+          type: string
+          description: JWT token containing user permissions and user ID
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/User'
+        pointOfSale:
+          $ref: '#/components/schemas/PointOfSale'
+        permissions:
+          type: array
+          description: List of permissions granted to the user
+          items:
+            type: string
+          example: ["CREATE_ORDER", "VOID_ORDER", "CREATE_INVOICE"]
+      required:
+        - status
+
+    LogoutRequest:
+      type: object
+      description: Request to log out the current user
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+      required:
+        - header
+
+    LogoutResponse:
+      type: object
+      description: Response from user logout
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    # ==========================================================================
+    # SYSTEM SCHEMAS
+    # ==========================================================================
+
+    CheckServiceResponse:
+      type: object
+      description: Response from the service health check endpoint
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    ChangePointOfSaleRequest:
+      type: object
+      description: Request to change the active point of sale
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        pointOfSaleId:
+          type: string
+          description: Unique identifier of the point of sale to switch to
+          example: "pos-001"
+      required:
+        - header
+        - pointOfSaleId
+
+    ChangePointOfSaleResponse:
+      type: object
+      description: Response after attempting to change the point of sale
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        loginToken:
+          type: string
+          description: New login token containing permissions for the new point of sale (only present if change was successful)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        pointOfSale:
+          $ref: '#/components/schemas/PointOfSale'
+      required:
+        - status
+
+    SetLogLevelRequest:
+      type: object
+      description: Request to change the logging level for a specific log type
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        logType:
+          $ref: '#/components/schemas/LogType'
+        logLevelType:
+          $ref: '#/components/schemas/LogLevelType'
+      required:
+        - header
+        - logType
+        - logLevelType
+
+    SetLogLevelResponse:
+      type: object
+      description: Response after setting the log level
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    GetLogLevelRequest:
+      type: object
+      description: Request to retrieve the current log level for a specific log type
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        logType:
+          $ref: '#/components/schemas/LogType'
+      required:
+        - header
+        - logType
+
+    GetLogLevelResponse:
+      type: object
+      description: Response containing the current log level for the requested log type
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        logLevelType:
+          $ref: '#/components/schemas/LogLevelType'
+      required:
+        - status
+
+    AddLogEntryRequest:
+      type: object
+      description: Request to add a new entry to the system logs
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        logType:
+          $ref: '#/components/schemas/LogType'
+        logLevelType:
+          $ref: '#/components/schemas/LogLevelType'
+        message:
+          type: string
+          description: The log message content
+          example: "User session started successfully"
+        moduleName:
+          type: string
+          description: Name of the main module or microservice that generated the log entry
+          example: "Booking"
+        functionName:
+          type: string
+          description: Name of the method or function that generated the log entry
+          example: "add_articles"
+        traceId:
+          type: string
+          description: Trace ID to correlate related log entries. If not provided, the internal application trace ID is used
+          example: "trace-abc123-def456"
+        ioType:
+          type: string
+          description: Indicates the I/O direction when logging data transmission
+          enum:
+            - IN
+            - OUT
+          example: "IN"
+      required:
+        - header
+        - logType
+        - logLevelType
+
+    AddLogEntryResponse:
+      type: object
+      description: Response after adding a log entry
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    # ==========================================================================
+    # BASE DATA SCHEMAS
+    # ==========================================================================
+
+    PointOfSale:
+      type: object
+      description: Point of sale configuration and settings
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the point of sale
+          example: "pos-001"
+        name:
+          type: string
+          description: Display name of the point of sale
+          example: "Main Restaurant"
+        outlet:
+          $ref: '#/components/schemas/Outlet'
+        workflowType:
+          $ref: '#/components/schemas/WorkflowType'
+        workflowSettings:
+          description: Additional settings depending on workflow type (oneOf)
+          oneOf:
+            - $ref: '#/components/schemas/WorkflowSettingsTableService'
+            - $ref: '#/components/schemas/WorkflowSettingsSelfService'
+            - $ref: '#/components/schemas/WorkflowSettingsSelfOrder'
+        askForCancellationReason:
+          type: boolean
+          description: If true, the user is asked for a cancellation reason when cancelling an item
+          example: true
+        askForGuestCount:
+          $ref: '#/components/schemas/AskForGuestCountType'
+        askForOutlet:
+          $ref: '#/components/schemas/AskForOutletType'
+        bookOnLogout:
+          type: boolean
+          description: Book all open items on logout (e.g., on key removal)
+          example: false
+        logoutAfterSeconds:
+          type: integer
+          description: Timeout in seconds after which the device needs to log out
+          example: 300
+        orderDisplayOption:
+          $ref: '#/components/schemas/PointOfSaleOrderDisplayOption'
+        hardware:
+          type: array
+          description: Hardware connected to this point of sale
+          items:
+            $ref: '#/components/schemas/Hardware'
+        currency:
+          type: string
+          description: Currency code for the point of sale
+          example: "EUR"
+        mediumWorkflowType:
+          $ref: '#/components/schemas/MediumWorkflowType'
+        allowManualMediumIdEntry:
+          type: boolean
+          description: If true, manual entry of medium ID is allowed
+          example: true
+      required:
+        - id
+        - name
+
+    Hardware:
+      type: object
+      description: Hardware device connected to a point of sale
+      properties:
+        type:
+          $ref: '#/components/schemas/HardwareType'
+        id:
+          type: string
+          description: Unique identifier of the hardware
+          example: "printer-001"
+        name:
+          type: string
+          description: Display name of the hardware
+          example: "Kitchen Printer"
+        data:
+          type: string
+          description: Device connection string, URL, or configuration data
+          example: "192.168.1.100:9100"
+      required:
+        - type
+        - id
+        - name
+        - data
+
+    WorkflowSettingsTableService:
+      type: object
+      description: Settings for table service workflow
+      properties:
+        allowBookingByAnyone:
+          type: boolean
+          description: If true, booking can be done by any user; otherwise only by the order owner
+          example: false
+        allowInvoicingByAnyone:
+          type: boolean
+          description: If true, invoicing can be done by any user; otherwise only by the order owner
+          example: false
+
+    WorkflowSettingsSelfService:
+      type: object
+      description: Settings for self service workflow (no additional settings currently)
+
+    WorkflowSettingsSelfOrder:
+      type: object
+      description: Settings for self order workflow
+      properties:
+        paymentTypeId:
+          type: string
+          description: Default payment type for self orders
+          example: "payment-card"
+        maxItems:
+          type: integer
+          description: Maximum number of items per order
+          example: 50
+
+    Outlet:
+      type: object
+      description: Service area or outlet
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the outlet
+          example: "outlet-001"
+        name:
+          type: string
+          description: Display name of the outlet
+          example: "Terrace"
+        alternativeVatRateName:
+          type: string
+          description: Name of an alternative VAT rate. If provided, user is asked if this rate should be used
+          example: "Take-away VAT"
+      required:
+        - id
+        - name
+
+    Discount:
+      type: object
+      description: Discount definition
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the discount
+          example: "discount-001"
+        name:
+          type: string
+          description: Display name of the discount
+          example: "Happy Hour 20%"
+      required:
+        - id
+        - name
+
+    User:
+      type: object
+      description: User information
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the user
+          example: "user-001"
+        name:
+          type: string
+          description: Display name of the user
+          example: "John Smith"
+      required:
+        - id
+        - name
+
+    Course:
+      type: object
+      description: Course within a course group (e.g., starter, main, dessert)
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the course
+          example: "course-main"
+        name:
+          type: string
+          description: Display name of the course
+          example: "Main Course"
+      required:
+        - id
+        - name
+
+    CourseGroup:
+      type: object
+      description: Group of courses for organizing order items
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the course group
+          example: "coursegroup-001"
+        name:
+          type: string
+          description: Display name of the course group
+          example: "Dinner Courses"
+        courses:
+          type: array
+          description: List of courses in this group
+          items:
+            $ref: '#/components/schemas/Course'
+      required:
+        - id
+        - name
+
+    TransactionType:
+      type: object
+      description: Transaction type definition
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the transaction type
+          example: "trans-001"
+        name:
+          type: string
+          description: Display name of the transaction type
+          example: "Sale"
+      required:
+        - id
+        - name
+
+    PaymentType:
+      type: object
+      description: Payment type configuration
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the payment type
+          example: "payment-cash"
+        name:
+          type: string
+          description: Display name of the payment type
+          example: "Cash"
+        partner:
+          $ref: '#/components/schemas/Partner'
+        signatureRequired:
+          type: boolean
+          description: If true, signature is required for this payment type
+          example: false
+        type:
+          $ref: '#/components/schemas/PaymentTypeMode'
+        tipAllowed:
+          type: boolean
+          description: If true, tip can be added to the payment
+          example: true
+        splittingAllowed:
+          type: boolean
+          description: If true, this payment type can be used along with other payment types
+          example: true
+        inputType:
+          $ref: '#/components/schemas/InputType'
+      required:
+        - id
+        - name
+        - type
+        - inputType
+
+    Menu:
+      type: object
+      description: Menu configuration containing menu items
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the menu
+          example: "menu-main"
+        name:
+          type: string
+          description: Display name of the menu
+          example: "Main Menu"
+        menuItems:
+          type: array
+          description: Menu items and their positions
+          items:
+            $ref: '#/components/schemas/MenuItem'
+        type:
+          $ref: '#/components/schemas/MenuType'
+        rows:
+          type: integer
+          description: Number of rows in the menu grid
+          example: 6
+        cols:
+          type: integer
+          description: Number of columns in the menu grid
+          example: 8
+        minModifiers:
+          type: integer
+          description: Minimum number of modifiers to select (for modifier menus)
+          example: 0
+        maxModifiers:
+          type: integer
+          description: Maximum number of modifiers to select (for modifier menus)
+          example: 5
+        nextModifierMenuId:
+          type: string
+          description: Next modifier menu to show (for modifier menus)
+          example: "menu-modifiers-2"
+        modifierCanBeSelectedMultipleTimes:
+          type: boolean
+          description: If the same modifier can be selected multiple times
+          example: true
+        alwaysShowModifiers:
+          type: boolean
+          description: If modifiers should always be shown
+          example: false
+      required:
+        - id
+        - name
+        - type
+
+    MenuItem:
+      type: object
+      description: Individual item within a menu
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the menu item
+          example: "menuitem-001"
+        name:
+          type: array
+          description: Name of the menu item (multiple lines possible)
+          items:
+            type: string
+          example: ["Cheeseburger", "with fries"]
+        row:
+          type: integer
+          description: Row position of the menu item in the grid
+          example: 1
+        col:
+          type: integer
+          description: Column position of the menu item in the grid
+          example: 3
+        function:
+          description: Function performed by this menu item (oneOf)
+          oneOf:
+            - $ref: '#/components/schemas/MenuArticle'
+            - $ref: '#/components/schemas/ArticleFilter'
+            - $ref: '#/components/schemas/MenuItemFunctionCourse'
+            - $ref: '#/components/schemas/MenuItemFunctionOrder'
+            - $ref: '#/components/schemas/ModifierFunction'
+            - $ref: '#/components/schemas/MenuItemFunctionInput'
+            - $ref: '#/components/schemas/MenuItemFunctionDiscountLevel'
+            - $ref: '#/components/schemas/MenuItemFunctionPartner'
+            - $ref: '#/components/schemas/MenuItemFunctionSubMenu'
+        backColor:
+          type: string
+          description: Background color as RGBA hex string
+          example: "#FF0000FF"
+        foreColor:
+          type: string
+          description: Foreground color as RGBA hex string
+          example: "#FFFFFFFF"
+        fontSize:
+          type: number
+          format: float
+          description: Font size of the menu item text
+          example: 14.0
+        binaryData:
+          type: array
+          description: Binary data (e.g., image, audio)
+          items:
+            $ref: '#/components/schemas/BinaryData'
+        fixedPriceLevelId:
+          type: string
+          description: Price level ID to use for this menu item
+          example: "pricelevel-happy-hour"
+      required:
+        - id
+
+    MenuArticle:
+      type: object
+      description: Menu function that books one or more articles
+      properties:
+        articles:
+          type: array
+          description: Articles to book
+          items:
+            $ref: '#/components/schemas/Article'
+      required:
+        - articles
+
+    Article:
+      type: object
+      description: Article (product) definition
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the article
+          example: "article-001"
+        name:
+          type: string
+          description: Display name of the article
+          example: "Cheeseburger"
+        price:
+          type: number
+          format: double
+          description: Price for the article (determined by price level). Can be overridden if allowManualPrice is true
+          example: 12.50
+        modifierMenuId:
+          type: array
+          description: Modifier menus to show after booking the article
+          items:
+            type: string
+          example: ["menu-burger-extras"]
+        courseGroupId:
+          type: string
+          description: Course group to which the article belongs
+          example: "coursegroup-main"
+        courseId:
+          type: string
+          description: Default course for this article
+          example: "course-main"
+        restrictions:
+          type: array
+          description: Restrictions for the article (e.g., age, allergens)
+          items:
+            $ref: '#/components/schemas/ArticleFilter'
+        additionalArticleIds:
+          type: array
+          description: Additional article identifiers (PLU, EAN, etc.)
+          items:
+            $ref: '#/components/schemas/AdditionalArticleId'
+        articleSet:
+          type: array
+          description: Articles to book as a set with this article
+          items:
+            $ref: '#/components/schemas/Article'
+        binaryData:
+          type: array
+          description: Binary data (e.g., image)
+          items:
+            $ref: '#/components/schemas/BinaryData'
+        articleGroup:
+          type: string
+          description: Article group identifier
+          example: "burgers"
+        allowManualPrice:
+          type: boolean
+          description: Price can be overridden by the user
+          example: false
+        manualMinPrice:
+          type: number
+          format: double
+          description: Minimum price the user can enter (for manual pricing)
+          example: 1.00
+        manualMaxPrice:
+          type: number
+          format: double
+          description: Maximum price the user can enter (for manual pricing)
+          example: 100.00
+        isUnavailable:
+          type: boolean
+          description: If true, the article is currently unavailable and cannot be booked
+          example: false
+        isLocked:
+          type: boolean
+          description: If true, the article is locked and cannot be booked
+          example: false
+        priceFactorForMainArticle:
+          type: number
+          format: double
+          description: Price factor for the main article (if this article is a modifier)
+          example: 0.5
+        priceFactorRoundingAccuracy:
+          type: number
+          format: double
+          description: Rounding accuracy for the price factor (e.g., 0.05 for 5 cent steps)
+          example: 0.05
+        allowManualName:
+          type: boolean
+          description: Name can be overridden by the user
+          example: false
+        availableQuantity:
+          type: number
+          format: double
+          description: Available quantity of the article
+          example: 25
+        vatRate:
+          type: number
+          format: float
+          description: VAT rate for the article
+          example: 0.19
+        vatRateType:
+          $ref: '#/components/schemas/TaxType'
+      required:
+        - id
+        - name
+
+    AdditionalArticleId:
+      type: object
+      description: Additional identifier for an article
+      properties:
+        id:
+          type: string
+          description: The additional identifier value
+          example: "4006381333931"
+        type:
+          $ref: '#/components/schemas/ArticleIdType'
+      required:
+        - id
+        - type
+
+    ArticleFilter:
+      type: object
+      description: Filter or restriction for articles
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the filter
+          example: "filter-gluten"
+        name:
+          type: string
+          description: Display name of the filter
+          example: "Gluten-free"
+        type:
+          $ref: '#/components/schemas/MenuItemFunctionFilterType'
+      required:
+        - id
+        - type
+
+    MenuItemFunctionCourse:
+      type: object
+      description: Menu function that activates a course preselection
+      properties:
+        id:
+          type: string
+          description: Course ID to preselect
+          example: "course-dessert"
+      required:
+        - id
+
+    MenuItemFunctionOrder:
+      type: object
+      description: Menu function that temporarily switches to a defined order
+      properties:
+        id:
+          type: string
+          description: Order ID to switch to
+          example: "order-001"
+      required:
+        - id
+
+    MenuItemFunctionInput:
+      type: object
+      description: Menu function that shows an input field
+      properties:
+        type:
+          $ref: '#/components/schemas/MenuItemFunctionInputType'
+      required:
+        - type
+
+    MenuItemFunctionDiscountLevel:
+      type: object
+      description: Menu function that applies a discount level
+      properties:
+        id:
+          type: string
+          description: Discount level ID to apply
+          example: "discount-20"
+      required:
+        - id
+
+    MenuItemFunctionPartner:
+      type: object
+      description: Menu function that performs a partner function
+      properties:
+        partner:
+          $ref: '#/components/schemas/Partner'
+        type:
+          $ref: '#/components/schemas/MenuItemFunctionPartnerType'
+        additionalData:
+          type: string
+          description: Additional data for the partner function (e.g., article ID for voucher credit)
+          example: "voucher-article-001"
+      required:
+        - type
+        - additionalData
+
+    MenuItemFunctionSubMenu:
+      type: object
+      description: Menu function that opens another menu
+      properties:
+        id:
+          type: string
+          description: ID of the sub menu to open
+          example: "menu-drinks"
+      required:
+        - id
+
+    ReceiptPrinter:
+      type: object
+      description: Receipt printer definition
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the printer
+          example: "printer-001"
+        name:
+          type: string
+          description: Display name of the printer
+          example: "Front Desk Printer"
+      required:
+        - id
+        - name
+
+    CancellationReason:
+      type: object
+      description: Reason for cancelling an order item
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the cancellation reason
+          example: "cancel-wrong-order"
+        name:
+          type: string
+          description: Display name of the cancellation reason
+          example: "Wrong order"
+      required:
+        - id
+        - name
+
+    OutletArticleGroupMapping:
+      type: object
+      description: Filter for outlet and article group combinations (AND logic)
+      properties:
+        outletId:
+          type: string
+          description: Outlet ID to filter by
+          example: "outlet-001"
+        articleGroupId:
+          type: string
+          description: Article group ID to filter by
+          example: "articlegroup-food"
+
+    # ==========================================================================
+    # BASE DATA REQUEST/RESPONSE SCHEMAS
+    # ==========================================================================
+
+    GetPointsOfSaleRequest:
+      type: object
+      description: Request to retrieve points of sale
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        pointOfSaleIds:
+          type: array
+          description: Filter by specific point of sale IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["pos-001", "pos-002"]
+      required:
+        - header
+
+    GetPointsOfSaleResponse:
+      type: object
+      description: Response containing list of points of sale
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        pointsOfSale:
+          type: array
+          items:
+            $ref: '#/components/schemas/PointOfSale'
+      required:
+        - status
+
+    GetUsersRequest:
+      type: object
+      description: Request to retrieve users
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        userIds:
+          type: array
+          description: Filter by specific user IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["user-001", "user-002"]
+      required:
+        - header
+
+    GetUsersResponse:
+      type: object
+      description: Response containing list of users
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+      required:
+        - status
+
+    GetOutletsRequest:
+      type: object
+      description: Request to retrieve outlets
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        outletIds:
+          type: array
+          description: Filter by specific outlet IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["outlet-001"]
+      required:
+        - header
+
+    GetOutletsResponse:
+      type: object
+      description: Response containing list of outlets
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        outlets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Outlet'
+      required:
+        - status
+
+    GetDiscountsRequest:
+      type: object
+      description: Request to retrieve discounts
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        discountIds:
+          type: array
+          description: Filter by specific discount IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["discount-001"]
+      required:
+        - header
+
+    GetDiscountsResponse:
+      type: object
+      description: Response containing list of discounts
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        discounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Discount'
+      required:
+        - status
+
+    GetCourseGroupsRequest:
+      type: object
+      description: Request to retrieve course groups
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        courseGroupIds:
+          type: array
+          description: Filter by specific course group IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["coursegroup-001"]
+      required:
+        - header
+
+    GetCourseGroupsResponse:
+      type: object
+      description: Response containing list of course groups
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        courseGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseGroup'
+      required:
+        - status
+
+    GetTransactionTypesRequest:
+      type: object
+      description: Request to retrieve transaction types
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        transactionTypeIds:
+          type: array
+          description: Filter by specific transaction type IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["trans-001"]
+        onlyAssignedToOrderId:
+          type: string
+          description: Only return the transaction type assigned to this order ID
+          example: "order-001"
+      required:
+        - header
+
+    GetTransactionTypesResponse:
+      type: object
+      description: Response containing list of transaction types
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        transactionTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionType'
+      required:
+        - status
+
+    GetPaymentTypesRequest:
+      type: object
+      description: Request to retrieve payment types
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        paymentTypeIds:
+          type: array
+          description: Filter by specific payment type IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["payment-cash", "payment-card"]
+      required:
+        - header
+
+    GetPaymentTypesResponse:
+      type: object
+      description: Response containing list of payment types
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        paymentTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentType'
+      required:
+        - status
+
+    GetMenusRequest:
+      type: object
+      description: Request to retrieve menus
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Currently open order to determine the price level
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Currently open sub order to determine the price level
+          example: "suborder-001"
+        paymentTypeId:
+          type: string
+          description: Selected payment type to determine the price level
+          example: "payment-card"
+        menuIds:
+          type: array
+          description: Filter for menus to get (only filters home menus)
+          items:
+            type: string
+          example: ["menu-main", "menu-drinks"]
+      required:
+        - header
+
+    GetMenusResponse:
+      type: object
+      description: Response containing list of menus
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        menus:
+          type: array
+          items:
+            $ref: '#/components/schemas/Menu'
+      required:
+        - status
+
+    GetReceiptPrintersRequest:
+      type: object
+      description: Request to retrieve receipt printers
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        receiptPrinterIds:
+          type: array
+          description: Filter by specific printer IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["printer-001"]
+      required:
+        - header
+
+    GetReceiptPrintersResponse:
+      type: object
+      description: Response containing list of receipt printers
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        receiptPrinters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiptPrinter'
+      required:
+        - status
+
+    GetArticlesRequest:
+      type: object
+      description: Request to retrieve articles
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        articleIds:
+          type: array
+          description: Article IDs to get
+          items:
+            type: string
+          example: ["article-001", "article-002"]
+        orderId:
+          type: string
+          description: Currently open order to determine the price level
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Currently open sub order to determine the price level
+          example: "suborder-001"
+        paymentTypeId:
+          type: string
+          description: Selected payment type to determine the price level
+          example: "payment-card"
+        articleCodes:
+          type: array
+          description: Article codes to get (EAN, barcode, etc.) - added to article IDs
+          items:
+            type: string
+          example: ["4006381333931"]
+      required:
+        - header
+
+    GetArticlesResponse:
+      type: object
+      description: Response containing list of articles
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+      required:
+        - status
+
+    GetCancellationReasonsRequest:
+      type: object
+      description: Request to retrieve cancellation reasons
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        cancellationReasonIds:
+          type: array
+          description: Filter by specific cancellation reason IDs. If empty, returns all.
+          items:
+            type: string
+          example: ["cancel-001"]
+      required:
+        - header
+
+    GetCancellationReasonsResponse:
+      type: object
+      description: Response containing list of cancellation reasons
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        cancellationReasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/CancellationReason'
+      required:
+        - status
+
+    SetFavoritesMenuRequest:
+      type: object
+      description: Request to set favorites menu items for the current user
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        menuItems:
+          type: array
+          description: Menu items to set as favorites
+          items:
+            $ref: '#/components/schemas/MenuItem'
+      required:
+        - header
+
+    SetFavoritesMenuResponse:
+      type: object
+      description: Response after setting favorites menu
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    # ==========================================================================
+    # BOOKING SCHEMAS
+    # ==========================================================================
+
+    OrderId:
+      type: object
+      description: Order and sub-order ID combination
+      properties:
+        id:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+
+    Order:
+      type: object
+      description: Order information
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the order
+          example: "order-001"
+        name:
+          type: string
+          description: Display name of the order (e.g., table number)
+          example: "Table 5"
+        balance:
+          type: number
+          format: float
+          description: Current balance of the order
+          example: 45.50
+        subId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+        createdAt:
+          type: string
+          description: Creation timestamp
+          example: "2024-01-15T12:30:00Z"
+        modifiedAt:
+          type: string
+          description: Last modification timestamp
+          example: "2024-01-15T13:45:00Z"
+        createdByUserId:
+          type: string
+          description: User ID who created the order
+          example: "user-001"
+        modifiedByUserId:
+          type: string
+          description: User ID who last modified the order
+          example: "user-002"
+        ownedByUserId:
+          type: string
+          description: User ID who currently owns the order
+          example: "user-001"
+        locked:
+          type: boolean
+          description: Whether the order is locked
+          example: false
+        guestCount:
+          type: integer
+          description: Number of guests for this order
+          example: 4
+        outletId:
+          type: string
+          description: Outlet ID where this order belongs
+          example: "outlet-001"
+        orderType:
+          $ref: '#/components/schemas/OrderType'
+        orderData:
+          type: string
+          description: Additional generic data for the order as JSON
+          example: '{"notes": "Birthday celebration"}'
+        partnerData:
+          type: array
+          description: Partner data associated with the order
+          items:
+            $ref: '#/components/schemas/PartnerData'
+        restrictions:
+          type: array
+          description: Article restrictions for the order
+          items:
+            $ref: '#/components/schemas/ArticleFilter'
+        availableOrderItemTags:
+          type: array
+          description: Tags available for booking order items (e.g., seat number)
+          items:
+            type: string
+          example: ["seat-1", "seat-2"]
+        binaryData:
+          type: array
+          description: Binary data (e.g., image)
+          items:
+            $ref: '#/components/schemas/BinaryData'
+        transactionTypeId:
+          type: string
+          description: If set, order can only be booked with this transaction type
+          example: "trans-001"
+        discountAmount:
+          type: number
+          format: double
+          description: Amount of discount applied to this order
+          example: 5.00
+        discountId:
+          type: string
+          description: ID of discount applied to this order
+          example: "discount-001"
+        discountName:
+          type: string
+          description: Name of discount applied to this order
+          example: "Happy Hour"
+        salesVolumeOutletId:
+          type: string
+          description: Outlet ID if sales volume is booked for a different outlet
+          example: "outlet-002"
+        transactionId:
+          type: string
+          description: Cached transaction ID (usually from a payment attempt)
+          example: "txn-001"
+      required:
+        - id
+        - name
+        - balance
+        - orderType
+
+    OrderItem:
+      type: object
+      description: Item within an order
+      properties:
+        articleId:
+          type: string
+          description: Article ID
+          example: "article-001"
+        name:
+          type: string
+          description: Display name of the item
+          example: "Cheeseburger"
+        quantity:
+          type: number
+          format: double
+          description: Quantity ordered
+          example: 2.0
+        price:
+          type: number
+          format: double
+          description: Price per item (without discount/grant, happy hour already applied)
+          example: 12.50
+        binaryData:
+          type: array
+          description: Binary data (e.g., image)
+          items:
+            $ref: '#/components/schemas/BinaryData'
+        bookedAt:
+          type: string
+          description: Timestamp when item was booked
+          example: "2024-01-15T12:35:00Z"
+        outletId:
+          type: string
+          description: Outlet ID if booked for a different outlet
+          example: "outlet-001"
+        cancelledByUserId:
+          type: string
+          description: User ID who cancelled the item
+          example: "user-001"
+        cancelledAt:
+          type: string
+          description: Timestamp when item was cancelled
+          example: "2024-01-15T13:00:00Z"
+        cancellationReason:
+          type: string
+          description: Reason for cancellation
+          example: "Customer changed mind"
+        cancellationAuthorizedByUserId:
+          type: string
+          description: User ID who authorized the cancellation
+          example: "user-manager"
+        orderState:
+          $ref: '#/components/schemas/OrderStateType'
+        courseId:
+          type: string
+          description: Course ID for this item
+          example: "course-main"
+        courseGroupId:
+          type: string
+          description: Course group ID for this item
+          example: "coursegroup-001"
+        modifiers:
+          type: array
+          description: Modifiers applied to this item
+          items:
+            $ref: '#/components/schemas/Modifier'
+        weight:
+          type: number
+          format: double
+          description: Weight when a scale is used
+          example: 0.5
+        discountAmount:
+          type: number
+          format: double
+          description: Total discount amount for these items
+          example: 2.50
+        discountId:
+          type: string
+          description: Discount ID applied
+          example: "discount-001"
+        discountName:
+          type: string
+          description: Discount name applied
+          example: "Staff Discount"
+        happyHourDiscountAmount:
+          type: number
+          format: double
+          description: Happy hour discount per item (already in price)
+          example: 1.00
+        happyHourDiscountId:
+          type: string
+          description: Happy hour discount ID
+          example: "happyhour-001"
+        happyHourDiscountName:
+          type: string
+          description: Happy hour discount name
+          example: "Evening Special"
+        grantAmount:
+          type: number
+          format: double
+          description: Total grant amount for these items
+          example: 5.00
+        grantId:
+          type: string
+          description: Grant ID applied
+          example: "grant-001"
+        grantName:
+          type: string
+          description: Grant name applied
+          example: "All-Inclusive"
+        tags:
+          type: array
+          description: Tags for this item (e.g., seat number)
+          items:
+            type: string
+          example: ["seat-1"]
+        bookedFromMenuId:
+          type: string
+          description: Menu ID the item was booked from
+          example: "menu-main"
+        bookedFromMenuRow:
+          type: integer
+          description: Menu row the item was booked from
+          example: 2
+        bookedFromMenuCol:
+          type: integer
+          description: Menu column the item was booked from
+          example: 3
+        useAlternativeVatRate:
+          type: boolean
+          description: Use alternative VAT rate for this item
+          example: false
+        isLocked:
+          type: boolean
+          description: Item is locked and cannot be modified
+          example: false
+        availableQuantity:
+          type: number
+          format: double
+          description: Available quantity of the article
+          example: 10.0
+        priceLevelId:
+          type: string
+          description: Price level ID to use for this item
+          example: "pricelevel-001"
+        partnerItem:
+          $ref: '#/components/schemas/PartnerOrderItem'
+        displayOrderState:
+          $ref: '#/components/schemas/DisplayOrderStateType'
+      required:
+        - articleId
+
+    Modifier:
+      type: object
+      description: Modifier applied to an order item
+      properties:
+        articleId:
+          type: string
+          description: Article ID of the modifier
+          example: "article-extra-cheese"
+        comment:
+          type: string
+          description: Free-text comment modifier
+          example: "No onions"
+        binaryData:
+          type: array
+          description: Binary data
+          items:
+            $ref: '#/components/schemas/BinaryData'
+        modifierFunction:
+          $ref: '#/components/schemas/ModifierFunction'
+        isPreselection:
+          type: boolean
+          description: Whether this is a preselection modifier
+          example: false
+        name:
+          type: string
+          description: Display name of the modifier
+          example: "Extra Cheese"
+        price:
+          type: number
+          format: double
+          description: Price of the modifier
+          example: 1.50
+        bookedFromMenuId:
+          type: string
+          description: Menu ID the modifier was booked from
+          example: "menu-extras"
+        bookedFromMenuRow:
+          type: integer
+          description: Menu row
+          example: 1
+        bookedFromMenuCol:
+          type: integer
+          description: Menu column
+          example: 2
+
+    PartnerPaymentData:
+      type: object
+      description: Payment data from a partner (terminal, hotel, etc.)
+      properties:
+        paymentDeviceId:
+          type: string
+          description: Payment device/terminal ID
+          example: "terminal-001"
+        referenceId:
+          type: string
+          description: Transaction reference ID
+          example: "ref-123456"
+        paymentTypeMode:
+          $ref: '#/components/schemas/PaymentTypeMode'
+        customerPrintout:
+          type: string
+          description: Customer receipt printout (lines separated by \\n)
+          example: "Transaction Approved\\nCard: **** 1234"
+        merchantPrintout:
+          type: string
+          description: Merchant receipt printout (lines separated by \\n)
+          example: "Transaction Approved\\nMerchant Copy"
+        partnerPaymentType:
+          type: string
+          description: Payment type from partner (e.g., visa, mastercard)
+          example: "visa"
+        partner:
+          $ref: '#/components/schemas/Partner'
+        medium:
+          $ref: '#/components/schemas/Medium'
+
+    InvoicePayment:
+      type: object
+      description: Payment information for creating an invoice
+      properties:
+        paymentTypeId:
+          type: string
+          description: Payment type ID
+          example: "payment-cash"
+        amount:
+          type: number
+          format: float
+          description: Payment amount
+          example: 50.00
+        tip:
+          type: number
+          format: float
+          description: Tip amount
+          example: 5.00
+        data:
+          type: string
+          description: Additional payment data as JSON
+          example: '{"note": "Exact change"}'
+        paymentHandledByPartner:
+          type: boolean
+          description: Payment was handled by external partner
+          example: false
+        partnerPaymentData:
+          $ref: '#/components/schemas/PartnerPaymentData'
+        binaryData:
+          type: array
+          description: Binary data (e.g., signature image)
+          items:
+            $ref: '#/components/schemas/BinaryData'
+      required:
+        - paymentTypeId
+        - amount
+
+    InvoiceItem:
+      type: object
+      description: Line item on an invoice
+      properties:
+        articleId:
+          type: string
+          description: Article ID
+          example: "article-001"
+        name:
+          type: string
+          description: Article name
+          example: "Cheeseburger"
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+          example: 2.0
+        price:
+          type: number
+          format: float
+          description: Price per item
+          example: 12.50
+        vatRate:
+          type: number
+          format: float
+          description: VAT rate
+          example: 0.19
+        vatRateType:
+          $ref: '#/components/schemas/TaxType'
+        additionalVatRate:
+          type: number
+          format: float
+          description: Additional VAT rate if applicable
+          example: 0.0
+        additionalVatRateType:
+          $ref: '#/components/schemas/TaxType'
+        transactionTypeId:
+          type: string
+          description: Transaction type ID
+          example: "trans-001"
+        weight:
+          type: number
+          format: double
+          description: Weight if scale was used
+          example: 0.5
+        discountAmount:
+          type: number
+          format: float
+          description: Discount amount
+          example: 2.50
+        discountId:
+          type: string
+          description: Discount ID
+          example: "discount-001"
+        discountName:
+          type: string
+          description: Discount name
+          example: "Staff Discount"
+        happyHourDiscountAmount:
+          type: number
+          format: float
+          description: Happy hour discount amount
+          example: 1.00
+        happyHourDiscountId:
+          type: string
+          description: Happy hour discount ID
+          example: "happyhour-001"
+        happyHourDiscountName:
+          type: string
+          description: Happy hour discount name
+          example: "Evening Special"
+        grantAmount:
+          type: number
+          format: float
+          description: Grant amount
+          example: 5.00
+        grantId:
+          type: string
+          description: Grant ID
+          example: "grant-001"
+        grantName:
+          type: string
+          description: Grant name
+          example: "All-Inclusive"
+        unitDescription:
+          type: string
+          description: Unit description
+          example: "pcs"
+        articleGroupId:
+          type: string
+          description: Article group ID
+          example: "group-food"
+        articleGroupName:
+          type: string
+          description: Article group name
+          example: "Food"
+        modifiers:
+          type: array
+          description: Modifiers
+          items:
+            $ref: '#/components/schemas/Modifier'
+
+    InvoicePaymentItem:
+      type: object
+      description: Payment line item on an invoice
+      properties:
+        paymentTypeId:
+          type: string
+          description: Payment type ID
+          example: "payment-cash"
+        name:
+          type: string
+          description: Payment type name
+          example: "Cash"
+        total:
+          type: number
+          format: float
+          description: Total payment amount
+          example: 50.00
+        quantity:
+          type: number
+          format: double
+          description: Quantity (usually 1)
+          example: 1.0
+        isTip:
+          type: boolean
+          description: Whether this is a tip payment
+          example: false
+        paymentTypeMode:
+          $ref: '#/components/schemas/PaymentTypeMode'
+        data:
+          type: string
+          description: Additional payment data
+          example: '{"note": "Exact change"}'
+        partnerPaymentData:
+          $ref: '#/components/schemas/PartnerPaymentData'
+
+    Invoice:
+      type: object
+      description: |
+        Full invoice details. The invoiceData field may contain:
+        - "terminalId"
+      properties:
+        id:
+          type: string
+          description: Internal invoice ID (used for cancellation, etc.)
+          example: "inv-001"
+        idDisplay:
+          type: string
+          description: Invoice ID displayed to user
+          example: "INV-2024-0001"
+        orderId:
+          type: string
+          description: Associated order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Associated sub-order ID
+          example: "suborder-001"
+        createdAt:
+          type: string
+          description: Creation timestamp
+          example: "2024-01-15T14:00:00Z"
+        total:
+          type: number
+          format: float
+          description: Total invoice amount
+          example: 55.00
+        userId:
+          type: string
+          description: User who created the invoice
+          example: "user-001"
+        isCancellation:
+          type: boolean
+          description: Whether this is a cancellation invoice
+          example: false
+        guestCount:
+          type: integer
+          description: Number of guests
+          example: 4
+        invoiceData:
+          type: string
+          description: Additional invoice data as JSON
+          example: '{"terminalId": "terminal-001"}'
+        pointOfSaleId:
+          type: string
+          description: Point of sale where invoice was created
+          example: "pos-001"
+        items:
+          type: array
+          description: Invoice line items
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+        payments:
+          type: array
+          description: Payment line items
+          items:
+            $ref: '#/components/schemas/InvoicePaymentItem'
+        signatures:
+          type: array
+          description: Fiscalization signatures
+          items:
+            $ref: '#/components/schemas/SignatureItem'
+        transactionTypeId:
+          type: string
+          description: Transaction type ID
+          example: "trans-001"
+        cancelledByUserId:
+          type: string
+          description: User who cancelled (if cancellation)
+          example: "user-001"
+        cancelledAt:
+          type: string
+          description: Cancellation timestamp
+          example: "2024-01-15T15:00:00Z"
+        cancellationReason:
+          type: string
+          description: Reason for cancellation
+          example: "Customer request"
+        cancellationAuthorizedByUserId:
+          type: string
+          description: User who authorized cancellation
+          example: "user-manager"
+        cancellationReferenceId:
+          type: string
+          description: Reference to original/cancellation invoice
+          example: "inv-original"
+        transactionId:
+          type: string
+          description: Cached transaction ID
+          example: "txn-001"
+      required:
+        - id
+        - idDisplay
+        - orderId
+        - createdAt
+        - total
+        - userId
+        - isCancellation
+
+    InvoiceListItem:
+      type: object
+      description: Lightweight invoice list item
+      properties:
+        id:
+          type: string
+          description: Internal invoice ID
+          example: "inv-001"
+        idDisplay:
+          type: string
+          description: Display invoice ID
+          example: "INV-2024-0001"
+        orderId:
+          type: string
+          description: Associated order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Associated sub-order ID
+          example: "suborder-001"
+        createdAt:
+          type: string
+          description: Creation timestamp
+          example: "2024-01-15T14:00:00Z"
+        total:
+          type: number
+          format: float
+          description: Total amount
+          example: 55.00
+        userId:
+          type: string
+          description: User who created the invoice
+          example: "user-001"
+        isCancellation:
+          type: boolean
+          description: Whether this is a cancellation
+          example: false
+        info:
+          type: string
+          description: Additional info (hotel room, guest, etc.)
+          example: "Room 101 - Smith"
+      required:
+        - id
+        - idDisplay
+        - orderId
+        - createdAt
+        - total
+        - userId
+        - isCancellation
+
+    SignatureItem:
+      type: object
+      description: Fiscalization signature data
+      properties:
+        data:
+          type: string
+          description: Signature data
+          example: "ABC123..."
+        tag:
+          type: string
+          description: Signature tag
+          example: "QR"
+        message:
+          type: string
+          description: Signature message
+          example: "Fiscalization successful"
+        format:
+          $ref: '#/components/schemas/SignatureFormat'
+        type:
+          $ref: '#/components/schemas/SignatureType'
+
+    DisplayOrder:
+      type: object
+      description: Order for kitchen/bar display
+      properties:
+        id:
+          $ref: '#/components/schemas/OrderId'
+        name:
+          type: string
+          description: Order name
+          example: "Table 5"
+        createdAt:
+          type: string
+          description: Creation timestamp
+          example: "2024-01-15T12:30:00Z"
+        modifiedAt:
+          type: string
+          description: Last modification timestamp
+          example: "2024-01-15T12:45:00Z"
+        outletId:
+          type: string
+          description: Outlet ID
+          example: "outlet-001"
+        items:
+          type: array
+          description: Display order items
+          items:
+            $ref: '#/components/schemas/DisplayOrderItem'
+        userId:
+          type: string
+          description: User ID owning the order
+          example: "user-001"
+        userName:
+          type: string
+          description: User name owning the order
+          example: "John Smith"
+
+    DisplayOrderItem:
+      type: object
+      description: Item on a display order
+      properties:
+        id:
+          type: string
+          description: Item ID
+          example: "item-001"
+        subId:
+          type: string
+          description: Item sub-ID
+          example: "subitem-001"
+        articleId:
+          type: string
+          description: Article ID
+          example: "article-001"
+        name:
+          type: string
+          description: Item name
+          example: "Cheeseburger"
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+          example: 2.0
+        bookedAt:
+          type: string
+          description: Booking timestamp
+          example: "2024-01-15T12:35:00Z"
+        outletId:
+          type: string
+          description: Outlet ID
+          example: "outlet-001"
+        state:
+          $ref: '#/components/schemas/DisplayOrderStateType'
+        stateModifiedAt:
+          type: string
+          description: State change timestamp
+          example: "2024-01-15T12:40:00Z"
+        courseId:
+          type: string
+          description: Course ID
+          example: "course-main"
+        courseGroupId:
+          type: string
+          description: Course group ID
+          example: "coursegroup-001"
+        modifiers:
+          type: array
+          description: Item modifiers
+          items:
+            $ref: '#/components/schemas/Modifier'
+        preparationTime:
+          type: integer
+          description: Preparation time in seconds
+          example: 600
+      required:
+        - id
+        - subId
+        - state
+
+    SplitOrderTarget:
+      type: object
+      description: Target order for split operation
+      properties:
+        toOrderId:
+          type: string
+          description: Target order ID
+          example: "order-002"
+        toSubOrderId:
+          type: string
+          description: Target sub-order ID
+          example: "suborder-001"
+        items:
+          type: array
+          description: Items to split (empty = all items, only one target allowed)
+          items:
+            $ref: '#/components/schemas/OrderItem'
+      required:
+        - toOrderId
+
+    PartnerData:
+      type: object
+      description: Partner data associated with an order
+      properties:
+        partnerId:
+          type: string
+          description: Partner ID
+          example: "partner-hotel"
+        mediumId:
+          type: string
+          description: Medium ID
+          example: "RES-2024-001"
+        data:
+          type: string
+          description: Additional data as JSON
+          example: '{"roomNumber": "101"}'
+
+    # ==========================================================================
+    # BOOKING REQUEST/RESPONSE SCHEMAS
+    # ==========================================================================
+
+    GetOrdersRequest:
+      type: object
+      description: Request to retrieve orders
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderIds:
+          type: array
+          description: Filter by order IDs
+          items:
+            type: string
+          example: ["order-001", "order-002"]
+        subOrderIds:
+          type: array
+          description: Filter by sub-order IDs
+          items:
+            type: string
+        outletIds:
+          type: array
+          description: Filter by outlet IDs
+          items:
+            type: string
+        userIds:
+          type: array
+          description: Filter by user IDs (only works if all orders are displayed for POS)
+          items:
+            type: string
+      required:
+        - header
+
+    GetOrdersResponse:
+      type: object
+      description: Response containing list of orders
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+      required:
+        - status
+
+    GetOrderItemsRequest:
+      type: object
+      description: Request to retrieve order items
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+      required:
+        - header
+        - orderId
+
+    GetOrderItemsResponse:
+      type: object
+      description: Response containing order items
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totalAmount:
+          type: number
+          format: double
+          description: Total amount of the order
+          example: 45.50
+        discountAmount:
+          type: number
+          format: double
+          description: Discount amount applied
+          example: 5.00
+        discountId:
+          type: string
+          description: Discount ID applied
+          example: "discount-001"
+        discountName:
+          type: string
+          description: Discount name applied
+          example: "Happy Hour"
+      required:
+        - status
+
+    BookOrderItemsRequest:
+      type: object
+      description: Request to book items to an order
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+        paymentTypeId:
+          type: string
+          description: Payment type to determine price level
+          example: "payment-card"
+        items:
+          type: array
+          description: Items to book
+          items:
+            $ref: '#/components/schemas/OrderItem'
+      required:
+        - header
+        - orderId
+
+    BookOrderItemsResponse:
+      type: object
+      description: Response after booking items
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    CreateInvoiceRequest:
+      type: object
+      description: Request to create an invoice
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+        payments:
+          type: array
+          description: Payments for the invoice
+          items:
+            $ref: '#/components/schemas/InvoicePayment'
+        items:
+          type: array
+          description: Items to include (if not all)
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        transactionTypeId:
+          type: string
+          description: Transaction type (no payments allowed if specified)
+          example: "trans-001"
+        receiptPrinterId:
+          type: string
+          description: Printer ID (uses default if not specified)
+          example: "printer-001"
+        transactionId:
+          type: string
+          description: Transaction ID for reference
+          example: "txn-001"
+        grantId:
+          type: string
+          description: Grant ID to apply
+          example: "grant-001"
+      required:
+        - header
+        - orderId
+
+    CreateInvoiceResponse:
+      type: object
+      description: Response after creating an invoice
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        invoiceId:
+          type: string
+          description: Internal invoice ID
+          example: "inv-001"
+        invoiceIdDisplay:
+          type: string
+          description: Display invoice ID
+          example: "INV-2024-0001"
+      required:
+        - status
+        - invoiceId
+        - invoiceIdDisplay
+
+    CalculatePricesRequest:
+      type: object
+      description: Request to calculate prices for items
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID for price level context
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID for price level context
+          example: "suborder-001"
+        paymentTypeId:
+          type: string
+          description: Payment type for price level
+          example: "payment-card"
+        discountId:
+          type: string
+          description: Discount to apply
+          example: "discount-001"
+        grantId:
+          type: string
+          description: Grant to apply
+          example: "grant-001"
+        transactionTypeId:
+          type: string
+          description: Transaction type
+          example: "trans-001"
+        priceLevelId:
+          type: string
+          description: Price level ID
+          example: "pricelevel-001"
+        items:
+          type: array
+          description: Items to calculate prices for
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        medium:
+          $ref: '#/components/schemas/Medium'
+      required:
+        - header
+
+    CalculatePricesResponse:
+      type: object
+      description: Response with calculated prices
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        items:
+          type: array
+          description: Items with calculated prices
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totalAmount:
+          type: number
+          format: double
+          description: Total amount
+          example: 45.50
+        discountAmount:
+          type: number
+          format: double
+          description: Discount amount
+          example: 5.00
+        discountId:
+          type: string
+          description: Discount ID
+          example: "discount-001"
+        discountName:
+          type: string
+          description: Discount name
+          example: "Happy Hour"
+        grantAmount:
+          type: number
+          format: double
+          description: Grant amount
+          example: 10.00
+        grantId:
+          type: string
+          description: Grant ID
+          example: "grant-001"
+        grantName:
+          type: string
+          description: Grant name
+          example: "All-Inclusive"
+      required:
+        - status
+
+    OpenOrderRequest:
+      type: object
+      description: Request to open or create an order
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID to open (creates new if not specified)
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID to open
+          example: "suborder-001"
+        partner:
+          $ref: '#/components/schemas/Partner'
+      required:
+        - header
+
+    OpenOrderResponse:
+      type: object
+      description: Response after opening an order
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        orderId:
+          type: string
+          description: Opened or created order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Opened or created sub-order ID
+          example: "suborder-001"
+        restrictions:
+          type: array
+          description: Article restrictions for the order
+          items:
+            $ref: '#/components/schemas/ArticleFilter'
+        outletId:
+          type: string
+          description: Outlet ID for the order
+          example: "outlet-001"
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+        salesVolumeOutletId:
+          type: string
+          description: Different outlet for sales volume
+          example: "outlet-002"
+        partnerData:
+          type: array
+          description: Partner data associated with the order
+          items:
+            $ref: '#/components/schemas/PartnerData'
+      required:
+        - status
+        - orderId
+
+    CloseOrderRequest:
+      type: object
+      description: Request to close an order
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID to close
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID to close
+          example: "suborder-001"
+      required:
+        - header
+        - orderId
+
+    CloseOrderResponse:
+      type: object
+      description: Response after closing an order
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    AdoptOrderRequest:
+      type: object
+      description: Request to adopt an order from another user
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID to adopt
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID to adopt
+          example: "suborder-001"
+      required:
+        - header
+        - orderId
+
+    AdoptOrderResponse:
+      type: object
+      description: Response after adopting an order
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    AssignOrderToPartnerMediumRequest:
+      type: object
+      description: Request to assign an order to a partner medium
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID to assign
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID to assign
+          example: "suborder-001"
+        partner:
+          $ref: '#/components/schemas/Partner'
+        medium:
+          $ref: '#/components/schemas/Medium'
+        permanently:
+          type: boolean
+          description: If true, permanently assigned until medium expires
+          example: true
+      required:
+        - header
+        - orderId
+        - permanently
+
+    AssignOrderToPartnerMediumResponse:
+      type: object
+      description: Response after assigning order to partner medium
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    SplitOrderRequest:
+      type: object
+      description: Request to split an order
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        fromOrderId:
+          type: string
+          description: Source order ID
+          example: "order-001"
+        fromSubOrderId:
+          type: string
+          description: Source sub-order ID
+          example: "suborder-001"
+        splitAmount:
+          type: number
+          format: float
+          description: Amount to split
+          example: 25.00
+        splitDivider:
+          type: number
+          format: float
+          description: Divider to split amount
+          example: 2.0
+        targets:
+          type: array
+          description: Target orders for split items
+          items:
+            $ref: '#/components/schemas/SplitOrderTarget'
+      required:
+        - header
+        - fromOrderId
+
+    SplitOrderResponse:
+      type: object
+      description: Response after splitting an order
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    MoveOrderRequest:
+      type: object
+      description: Request to move all items from one order to another
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        fromOrderId:
+          type: string
+          description: Source order ID
+          example: "order-001"
+        fromSubOrderId:
+          type: string
+          description: Source sub-order ID
+          example: "suborder-001"
+        toOrderId:
+          type: string
+          description: Destination order ID
+          example: "order-002"
+        toSubOrderId:
+          type: string
+          description: Destination sub-order ID
+          example: "suborder-001"
+      required:
+        - header
+        - fromOrderId
+        - toOrderId
+
+    MoveOrderResponse:
+      type: object
+      description: Response after moving an order
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    GetInvoicesRequest:
+      type: object
+      description: Request to retrieve full invoice details
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        userIds:
+          type: array
+          description: Filter by user IDs
+          items:
+            type: string
+        invoiceIds:
+          type: array
+          description: Filter by internal invoice IDs
+          items:
+            type: string
+        displayInvoiceIds:
+          type: array
+          description: Filter by display invoice IDs
+          items:
+            type: string
+      required:
+        - header
+
+    GetInvoicesResponse:
+      type: object
+      description: Response containing full invoice details
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invoice'
+      required:
+        - status
+
+    GetInvoiceListRequest:
+      type: object
+      description: Request to retrieve lightweight invoice list
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        fromCreatedAt:
+          type: string
+          description: Filter invoices created after this date/time
+          example: "2024-01-01T00:00:00Z"
+        toCreatedAt:
+          type: string
+          description: Filter invoices created before this date/time
+          example: "2024-01-31T23:59:59Z"
+        includeCancelled:
+          type: boolean
+          description: Include cancelled invoices
+          example: false
+        userIds:
+          type: array
+          description: Filter by user IDs
+          items:
+            type: string
+        invoiceIds:
+          type: array
+          description: Filter by internal invoice IDs
+          items:
+            type: string
+        displayInvoiceIds:
+          type: array
+          description: Filter by display invoice IDs
+          items:
+            type: string
+      required:
+        - header
+
+    GetInvoiceListResponse:
+      type: object
+      description: Response containing lightweight invoice list
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceListItem'
+      required:
+        - status
+
+    CancelInvoiceRequest:
+      type: object
+      description: Request to cancel an invoice
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        invoiceId:
+          type: string
+          description: Invoice ID to cancel
+          example: "inv-001"
+        cancellationPartnerPaymentData:
+          $ref: '#/components/schemas/PartnerPaymentData'
+        cancellationPaymentTypeMode:
+          $ref: '#/components/schemas/PaymentTypeMode'
+        cancelledToChangePaymentType:
+          type: boolean
+          description: Cancelled to change payment type
+          example: false
+        receiptPrinterId:
+          type: string
+          description: Printer ID for cancellation receipt
+          example: "printer-001"
+      required:
+        - header
+
+    CancelInvoiceResponse:
+      type: object
+      description: Response after cancelling an invoice
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        invoiceId:
+          type: string
+          description: New cancellation invoice ID
+          example: "inv-cancel-001"
+        invoiceIdDisplay:
+          type: string
+          description: Display ID of cancellation invoice
+          example: "INV-2024-0002"
+        orderId:
+          type: string
+          description: New order ID for rebooked items
+          example: "order-002"
+        subOrderId:
+          type: string
+          description: New sub-order ID for rebooked items
+          example: "suborder-001"
+      required:
+        - status
+
+    CreateInvoiceTransactionIdRequest:
+      type: object
+      description: Request to create a transaction ID for an invoice
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+      required:
+        - header
+
+    CreateInvoiceTransactionIdResponse:
+      type: object
+      description: Response with transaction ID
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        transactionId:
+          type: string
+          description: Created transaction ID
+          example: "txn-001"
+      required:
+        - status
+
+    PrintInvoiceRequest:
+      type: object
+      description: Request to print an invoice
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        invoiceId:
+          type: string
+          description: Invoice ID to print
+          example: "inv-001"
+        isReprint:
+          type: boolean
+          description: Whether this is a reprint
+          example: false
+        receiptPrinterId:
+          type: string
+          description: Printer ID (uses default if not specified)
+          example: "printer-001"
+      required:
+        - header
+
+    PrintInvoiceResponse:
+      type: object
+      description: Response after printing invoice
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    PrintInvoicePreviewRequest:
+      type: object
+      description: Request to print an invoice preview
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+        receiptPrinterId:
+          type: string
+          description: Printer ID
+          example: "printer-001"
+        discountId:
+          type: string
+          description: Discount to apply in preview
+          example: "discount-001"
+        grantId:
+          type: string
+          description: Grant to apply in preview
+          example: "grant-001"
+      required:
+        - header
+
+    PrintInvoicePreviewResponse:
+      type: object
+      description: Response after printing invoice preview
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    UpdateOrderInfoRequest:
+      type: object
+      description: Request to update order information
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          type: string
+          description: Order ID
+          example: "order-001"
+        subOrderId:
+          type: string
+          description: Sub-order ID
+          example: "suborder-001"
+        name:
+          type: string
+          description: New order name
+          example: "Table 10"
+        guestCount:
+          type: integer
+          description: Guest count
+          example: 6
+        salesVolumeOutletId:
+          type: string
+          description: Sales volume outlet ID
+          example: "outlet-002"
+        partnerData:
+          type: array
+          description: Partner data to update
+          items:
+            $ref: '#/components/schemas/PartnerData'
+        transactionId:
+          type: string
+          description: Cache transaction ID (empty removes it)
+          example: "txn-001"
+      required:
+        - header
+
+    UpdateOrderInfoResponse:
+      type: object
+      description: Response after updating order info
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    GetDisplayOrdersRequest:
+      type: object
+      description: Request to retrieve display orders
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        outletArticleGroupMappings:
+          type: array
+          description: Filter by outlet and article group combinations
+          items:
+            $ref: '#/components/schemas/OutletArticleGroupMapping'
+        orderIds:
+          type: array
+          description: Filter by order/sub-order combinations
+          items:
+            $ref: '#/components/schemas/OrderId'
+        displayOrderStateTypes:
+          type: array
+          description: Filter by order states
+          items:
+            $ref: '#/components/schemas/DisplayOrderStateType'
+      required:
+        - header
+
+    GetDisplayOrdersResponse:
+      type: object
+      description: Response containing display orders
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        displayOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisplayOrder'
+      required:
+        - status
+
+    UpdateDisplayOrderItemRequest:
+      type: object
+      description: Request to update a display order item state
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        orderItemId:
+          type: string
+          description: Order item ID
+          example: "item-001"
+        orderItemSubId:
+          type: string
+          description: Order item sub-ID
+          example: "subitem-001"
+        state:
+          $ref: '#/components/schemas/DisplayOrderStateType'
+      required:
+        - header
+        - state
+
+    UpdateDisplayOrderItemResponse:
+      type: object
+      description: Response after updating display order item
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    DeleteDisplayOrderItemRequest:
+      type: object
+      description: Request to delete a display order item
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        orderItemId:
+          type: string
+          description: Order item ID
+          example: "item-001"
+        orderItemSubId:
+          type: string
+          description: Order item sub-ID
+          example: "subitem-001"
+      required:
+        - header
+
+    DeleteDisplayOrderItemResponse:
+      type: object
+      description: Response after deleting display order item
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    # ==========================================================================
+    # ENUMS
+    # ==========================================================================
+
+    LogType:
+      type: string
+      description: Type of log to target
+      enum:
+        - APPLICATION
+        - COMMUNICATION
+      example: "APPLICATION"
+
+    LogLevelType:
+      type: string
+      description: Severity level of logging
+      enum:
+        - ERROR
+        - WARNING
+        - INFO
+        - DEBUG
+      example: "INFO"
+
+    # ==========================================================================
+    # BASE DATA ENUMS
+    # ==========================================================================
+
+    WorkflowType:
+      type: string
+      description: Workflow type of the point of sale
+      enum:
+        - TABLE_SERVICE
+        - SELF_SERVICE
+        - SELF_ORDER
+      example: "TABLE_SERVICE"
+
+    AskForGuestCountType:
+      type: string
+      description: When to ask for guest count
+      enum:
+        - ON_ORDER_OPEN
+        - ON_INVOICE
+        - NEVER
+      example: "ON_ORDER_OPEN"
+
+    AskForOutletType:
+      type: string
+      description: When to ask for outlet selection
+      enum:
+        - ON_ORDER_OPEN
+        - ON_INVOICE
+        - NEVER
+      example: "ON_ORDER_OPEN"
+
+    PointOfSaleOrderDisplayOption:
+      type: string
+      description: Which orders are displayed for a point of sale
+      enum:
+        - ALL
+        - OWN
+        - OUTLET
+      example: "ALL"
+
+    HardwareType:
+      type: string
+      description: Type of hardware device
+      enum:
+        - PRINTER
+        - SCANNER
+        - SCALE
+        - PAYMENT_TERMINAL
+        - DISPLAY
+      example: "PRINTER"
+
+    MediumWorkflowType:
+      type: string
+      description: Workflow type for medium handling
+      enum:
+        - NONE
+        - CARD
+        - NFC
+      example: "CARD"
+
+    DisplayOrderStateType:
+      type: string
+      description: Order state to display
+      enum:
+        - NEW
+        - IN_PROGRESS
+        - READY
+        - DELIVERED
+      example: "NEW"
+
+    PaymentTypeMode:
+      type: string
+      description: Mode of payment type
+      enum:
+        - CASH
+        - CARD
+        - VOUCHER
+        - ROOM_CHARGE
+        - PARTNER
+      example: "CASH"
+
+    InputType:
+      type: string
+      description: Default input type for payment
+      enum:
+        - NFC
+        - MANUAL
+        - CHIP
+        - SWIPE
+      example: "NFC"
+
+    MenuType:
+      type: string
+      description: Type of menu
+      enum:
+        - HOME
+        - MODIFIER
+        - FAVORITES
+      example: "HOME"
+
+    ArticleIdType:
+      type: string
+      description: Type of additional article identifier
+      enum:
+        - PLU
+        - EAN
+        - BARCODE
+        - SKU
+      example: "EAN"
+
+    MenuItemFunctionFilterType:
+      type: string
+      description: Type of menu item filter
+      enum:
+        - ALLERGEN
+        - INGREDIENT
+        - DIETARY
+        - AGE_RESTRICTION
+      example: "ALLERGEN"
+
+    MenuItemFunctionInputType:
+      type: string
+      description: Type of input field
+      enum:
+        - NUMPAD
+        - TEXT
+        - QUANTITY
+      example: "NUMPAD"
+
+    MenuItemFunctionPartnerType:
+      type: string
+      description: Type of partner function
+      enum:
+        - INFO
+        - CREDIT
+        - DEBIT
+        - SALE
+        - BALANCE
+      example: "INFO"
+
+    TaxType:
+      type: string
+      description: Type of tax/VAT rate
+      enum:
+        - STANDARD
+        - REDUCED
+        - ZERO
+        - EXEMPT
+      example: "STANDARD"
+
+    # ==========================================================================
+    # PARTNER SCHEMAS
+    # ==========================================================================
+
+    Partner:
+      type: object
+      description: |
+        Partner integration definition (e.g., hotel system, access control, voucher system).
+        The data field may contain partner-specific JSON data:
+        - HOTEL PARTNER: "roomNumbers" (array of room numbers)
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the partner
+          example: "partner-hotel-001"
+        name:
+          type: string
+          description: Display name of the partner
+          example: "Grand Hotel PMS"
+        type:
+          $ref: '#/components/schemas/PartnerSystemType'
+        data:
+          type: string
+          description: Additional partner-specific data as JSON
+          example: '{"roomNumbers": ["101", "102", "103"]}'
+      required:
+        - id
+        - name
+        - type
+
+    Medium:
+      type: object
+      description: |
+        Medium representing a card, voucher, reservation, or other identifier.
+        The data field may contain partner-specific JSON data:
+        - HOTEL PARTNER: "roomNumber", "reservationNumber", "arrangementCode"
+      properties:
+        id:
+          type: string
+          description: ID of the medium (e.g., reservation number, chip ID, QR code)
+          example: "RES-2024-001"
+        name:
+          type: string
+          description: Display name of the medium
+          example: "Room 101 - Smith"
+        type:
+          $ref: '#/components/schemas/MediumType'
+        discountId:
+          type: string
+          description: Discount ID to apply for this medium
+          example: "discount-vip"
+        grantId:
+          type: string
+          description: Grant ID to apply for this medium
+          example: "grant-allinclusive"
+        priceLevelId:
+          type: string
+          description: Price level ID to apply for this medium
+          example: "pricelevel-member"
+        paymentTypeId:
+          type: string
+          description: Payment type ID assigned to this medium
+          example: "payment-room-charge"
+        activationDate:
+          type: string
+          description: Date when medium becomes active (e.g., check-in date)
+          example: "2024-01-15T14:00:00Z"
+        expirationDate:
+          type: string
+          description: Date when medium expires (e.g., check-out date)
+          example: "2024-01-20T11:00:00Z"
+        owners:
+          type: array
+          description: Owner(s) of the medium
+          items:
+            $ref: '#/components/schemas/Owner'
+        balance:
+          $ref: '#/components/schemas/Balance'
+        data:
+          type: string
+          description: Additional partner-specific data as JSON
+          example: '{"roomNumber": "101", "reservationNumber": "RES-2024-001"}'
+        inputType:
+          $ref: '#/components/schemas/InputType'
+        templateId:
+          type: string
+          description: Template ID used for this medium (e.g., voucher template)
+          example: "template-gift-voucher"
+        useMediumId:
+          type: string
+          description: ID of the medium to use when booking (e.g., reservation ID for hotel)
+          example: "RES-2024-001"
+        usePartnerId:
+          type: string
+          description: ID of the partner to use when booking. Empty uses mapped default partner
+          example: "partner-hotel-001"
+
+    Owner:
+      type: object
+      description: Owner information for a medium or payment
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the owner
+          example: "owner-001"
+        title:
+          type: string
+          description: Title (e.g., Mr., Mrs., Dr.)
+          example: "Mr."
+        firstName:
+          type: string
+          description: First name
+          example: "John"
+        lastName:
+          type: string
+          description: Last name
+          example: "Smith"
+        street:
+          type: string
+          description: Street address
+          example: "123 Main Street"
+        city:
+          type: string
+          description: City
+          example: "Vienna"
+        zip:
+          type: string
+          description: Postal/ZIP code
+          example: "1010"
+        country:
+          type: string
+          description: Country code or name
+          example: "AT"
+
+    Balance:
+      type: object
+      description: Balance information for a medium
+      properties:
+        currency:
+          type: string
+          description: Currency code
+          example: "EUR"
+        amount:
+          type: number
+          format: double
+          description: Current balance amount
+          example: 150.00
+        debitLimit:
+          type: number
+          format: double
+          description: Maximum debit allowed
+          example: 500.00
+        creditLimit:
+          type: number
+          format: double
+          description: Maximum credit allowed
+          example: 0.00
+
+    Item:
+      type: object
+      description: Line item for partner transactions
+      properties:
+        articleId:
+          type: string
+          description: Article ID
+          example: "article-001"
+        articleName:
+          type: string
+          description: Article name
+          example: "Cheeseburger"
+        articleGroupId:
+          type: string
+          description: Article group ID
+          example: "group-food"
+        quantity:
+          type: number
+          format: double
+          description: Quantity of items (negative for cancellations)
+          example: 2.0
+        amount:
+          type: number
+          format: double
+          description: Amount per item (without discount)
+          example: 12.50
+        discount:
+          type: number
+          format: double
+          description: Total discount for these items
+          example: 2.50
+        taxPercent:
+          type: number
+          format: double
+          description: Tax percentage
+          example: 19.0
+        currency:
+          type: string
+          description: Currency code
+          example: "EUR"
+        taxType:
+          $ref: '#/components/schemas/TaxType'
+        isTip:
+          type: boolean
+          description: If true, this item is a tip
+          example: false
+
+    Payment:
+      type: object
+      description: Payment information for partner transactions
+      properties:
+        paymentTypeId:
+          type: string
+          description: Payment type ID
+          example: "payment-room-charge"
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+          example: 25.00
+        medium:
+          $ref: '#/components/schemas/Medium'
+        owner:
+          $ref: '#/components/schemas/Owner'
+        currency:
+          type: string
+          description: Currency code
+          example: "EUR"
+        isTip:
+          type: boolean
+          description: If true, this payment is a tip
+          example: false
+
+    PartnerOrderItem:
+      type: object
+      description: Order item associated with a partner and medium
+      properties:
+        partner:
+          $ref: '#/components/schemas/Partner'
+        medium:
+          $ref: '#/components/schemas/Medium'
+        item:
+          $ref: '#/components/schemas/Item'
+
+    # ==========================================================================
+    # PARTNER ENUMS
+    # ==========================================================================
+
+    PartnerSystemType:
+      type: string
+      description: Type of partner system
+      enum:
+        - HOTEL
+        - ACCESS
+        - VOUCHER
+        - LOYALTY
+        - PAYMENT
+      example: "HOTEL"
+
+    MediumType:
+      type: string
+      description: Type of medium
+      enum:
+        - HOTEL_RESERVATION
+        - ACCESS_CARD
+        - VOUCHER
+        - LOYALTY_CARD
+        - NFC_TAG
+        - QR_CODE
+      example: "HOTEL_RESERVATION"
+
+    BinaryType:
+      type: string
+      description: Type of binary data
+      enum:
+        - IMAGE
+        - AUDIO
+        - VIDEO
+        - DOCUMENT
+      example: "IMAGE"
+
+    # ==========================================================================
+    # BOOKING ENUMS
+    # ==========================================================================
+
+    OrderType:
+      type: string
+      description: Type of order
+      enum:
+        - TABLE_SERVICE
+        - SELF_SERVICE
+        - TAKEAWAY
+        - DELIVERY
+      example: "TABLE_SERVICE"
+
+    OrderStateType:
+      type: string
+      description: State of an order item
+      enum:
+        - OPEN
+        - BOOKED
+        - CANCELLED
+        - INVOICED
+      example: "OPEN"
+
+    SignatureFormat:
+      type: string
+      description: Format of fiscalization signature
+      enum:
+        - QR_CODE
+        - BARCODE
+        - TEXT
+      example: "QR_CODE"
+
+    SignatureType:
+      type: string
+      description: Type of fiscalization signature
+      enum:
+        - FISCAL
+        - DIGITAL
+      example: "FISCAL"
+
+    # ==========================================================================
+    # PARTNER REQUEST/RESPONSE SCHEMAS
+    # ==========================================================================
+
+    GetPartnersRequest:
+      type: object
+      description: Request to retrieve partners
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        partnerIds:
+          type: array
+          description: Filter by partner IDs
+          items:
+            type: string
+          example: ["partner-hotel-001"]
+        partnerSystemType:
+          $ref: '#/components/schemas/PartnerSystemType'
+      required:
+        - header
+
+    GetPartnersResponse:
+      type: object
+      description: Response containing list of partners
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        partners:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partner'
+      required:
+        - status
+
+    GetMediumsRequest:
+      type: object
+      description: |
+        Request to retrieve mediums from a partner.
+        
+        Search data examples by partner type:
+        - **HOTEL**: `{"name": "Smith", "roomNumber": "101", "filter": {"roomNumbers": ["101", "102"]}}`
+        - **ACCESS**: `{"cardNumber": "12345678"}`
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        partner:
+          $ref: '#/components/schemas/Partner'
+        mediums:
+          type: array
+          description: Specific mediums to retrieve
+          items:
+            $ref: '#/components/schemas/Medium'
+        searchData:
+          type: string
+          description: Additional search criteria as JSON
+          example: '{"name": "Smith", "roomNumber": "101"}'
+      required:
+        - header
+
+    GetMediumsResponse:
+      type: object
+      description: Response containing list of mediums
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        mediums:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medium'
+      required:
+        - status
+
+    BookMediumRequest:
+      type: object
+      description: Request to book a transaction against a medium
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        partner:
+          $ref: '#/components/schemas/Partner'
+        medium:
+          $ref: '#/components/schemas/Medium'
+        bookingType:
+          $ref: '#/components/schemas/MediumBookingType'
+        payments:
+          type: array
+          description: Payments for the booking
+          items:
+            $ref: '#/components/schemas/Payment'
+        items:
+          type: array
+          description: Items to book
+          items:
+            $ref: '#/components/schemas/Item'
+        invoiceId:
+          type: string
+          description: Invoice ID from POS
+          example: "inv-001"
+        transactionId:
+          type: string
+          description: Transaction ID from POS
+          example: "txn-001"
+        isCancellation:
+          type: boolean
+          description: If true, this is a cancellation booking
+          example: false
+      required:
+        - header
+
+    BookMediumResponse:
+      type: object
+      description: Response from medium booking
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        approvedAmount:
+          type: number
+          format: double
+          description: Approved amount for the booking
+          example: 50.00
+        newBalance:
+          $ref: '#/components/schemas/Balance'
+        invoiceId:
+          type: string
+          description: Invoice ID from partner
+          example: "partner-inv-001"
+        transactionId:
+          type: string
+          description: Transaction ID from partner
+          example: "partner-txn-001"
+      required:
+        - status
+
+    # ==========================================================================
+    # FISCALIZATION SCHEMAS
+    # ==========================================================================
+
+    CustomerFiscalData:
+      type: object
+      description: Customer fiscal information for tax compliance
+      properties:
+        name:
+          type: string
+          description: Name of the customer or company
+          example: "Acme Corporation"
+        nameAddition:
+          type: string
+          description: Additional name information
+          example: "European Branch"
+        street:
+          type: string
+          description: Street address
+          example: "Main Street"
+        streetNumber:
+          type: string
+          description: Street number
+          example: "123"
+        city:
+          type: string
+          description: City
+          example: "Vienna"
+        zip:
+          type: string
+          description: Postal/ZIP code
+          example: "1010"
+        country:
+          type: string
+          description: Country code
+          example: "AT"
+        vatId:
+          type: string
+          description: VAT ID including country code
+          example: "ATU12345678"
+        taxId:
+          type: string
+          description: Tax ID
+          example: "123/456/78901"
+        eInvoiceId:
+          type: string
+          description: E-Invoice ID for electronic invoicing
+          example: "einv-001"
+
+    FiscalInvoiceQueueItem:
+      type: object
+      description: Invoice item in the fiscalization queue
+      properties:
+        invoiceId:
+          type: string
+          description: Internal invoice ID
+          example: "inv-001"
+        displayInvoiceId:
+          type: string
+          description: Display invoice ID
+          example: "INV-2024-0001"
+        status:
+          $ref: '#/components/schemas/FiscalQueueStatusType'
+        statusText:
+          type: string
+          description: Human-readable status message
+          example: "Pending fiscalization"
+        addedAt:
+          type: string
+          description: Timestamp when added to queue
+          example: "2024-01-15T14:00:00Z"
+        modifiedAt:
+          type: string
+          description: Timestamp of last modification
+          example: "2024-01-15T14:05:00Z"
+        fiscalizedAt:
+          type: string
+          description: Timestamp when fiscalized
+          example: "2024-01-15T14:10:00Z"
+        retries:
+          type: integer
+          description: Number of retry attempts
+          example: 0
+
+    FiscalOrderQueueItem:
+      type: object
+      description: Order item in the fiscalization queue
+      properties:
+        id:
+          $ref: '#/components/schemas/OrderId'
+        itemId:
+          type: string
+          description: Item ID
+          example: "item-001"
+        subItemId:
+          type: string
+          description: Sub-item ID
+          example: "subitem-001"
+        status:
+          $ref: '#/components/schemas/FiscalQueueStatusType'
+        statusText:
+          type: string
+          description: Human-readable status message
+          example: "Pending fiscalization"
+        addedAt:
+          type: string
+          description: Timestamp when added to queue
+          example: "2024-01-15T12:35:00Z"
+        modifiedAt:
+          type: string
+          description: Timestamp of last modification
+          example: "2024-01-15T12:40:00Z"
+        fiscalizedAt:
+          type: string
+          description: Timestamp when fiscalized
+          example: "2024-01-15T12:45:00Z"
+        retries:
+          type: integer
+          description: Number of retry attempts
+          example: 0
+
+    # ==========================================================================
+    # FISCALIZATION REQUEST/RESPONSE SCHEMAS
+    # ==========================================================================
+
+    FiscalizeInvoiceRequest:
+      type: object
+      description: Request to fiscalize an invoice
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        invoiceId:
+          type: string
+          description: Invoice ID to fiscalize
+          example: "inv-001"
+      required:
+        - header
+
+    FiscalizeInvoiceResponse:
+      type: object
+      description: Response after fiscalizing an invoice
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    FiscalizeOrderRequest:
+      type: object
+      description: Request to fiscalize an order
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+      required:
+        - header
+
+    FiscalizeOrderResponse:
+      type: object
+      description: Response after fiscalizing an order
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    GetFiscalJournalRequest:
+      type: object
+      description: Request to export fiscal journal
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        journalType:
+          $ref: '#/components/schemas/FiscalJournalType'
+        dateFrom:
+          type: string
+          description: Start date for journal export
+          example: "2024-01-01"
+        dateTo:
+          type: string
+          description: End date for journal export
+          example: "2024-01-31"
+      required:
+        - header
+
+    GetFiscalJournalResponse:
+      type: object
+      description: Response with fiscal journal export location
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        exportLocation:
+          type: string
+          description: Location where export can be retrieved
+          example: "/exports/fiscal-journal-2024-01.xml"
+      required:
+        - status
+
+    GetCustomerFiscalDataRequest:
+      type: object
+      description: Request to retrieve customer fiscal data
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        fiscalId:
+          type: string
+          description: Fiscal ID to look up (e.g., VAT ID)
+          example: "ATU12345678"
+        partnerId:
+          type: string
+          description: Partner ID of the fiscal data provider
+          example: "partner-fiscal-001"
+      required:
+        - header
+
+    GetCustomerFiscalDataResponse:
+      type: object
+      description: Response containing customer fiscal data
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        customerFiscalData:
+          $ref: '#/components/schemas/CustomerFiscalData'
+      required:
+        - status
+
+    ExecuteFiscalCommandRequest:
+      type: object
+      description: Request to execute a fiscal command
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        commandType:
+          $ref: '#/components/schemas/FiscalCommandType'
+      required:
+        - header
+
+    ExecuteFiscalCommandResponse:
+      type: object
+      description: Response after executing fiscal command
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    GetInvoiceFiscalQueueRequest:
+      type: object
+      description: Request to retrieve invoice fiscal queue
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        invoiceIds:
+          type: array
+          description: Filter by invoice IDs
+          items:
+            type: string
+          example: ["inv-001", "inv-002"]
+        status:
+          $ref: '#/components/schemas/FiscalQueueStatusType'
+        fromModifiedAt:
+          type: string
+          description: Filter from modification date
+          example: "2024-01-01T00:00:00Z"
+        toModifiedAt:
+          type: string
+          description: Filter to modification date
+          example: "2024-01-31T23:59:59Z"
+      required:
+        - header
+
+    GetInvoiceFiscalQueueResponse:
+      type: object
+      description: Response containing invoice fiscal queue items
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        fiscalInvoiceQueueItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiscalInvoiceQueueItem'
+      required:
+        - status
+
+    GetOrderFiscalQueueRequest:
+      type: object
+      description: Request to retrieve order fiscal queue
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        orderIds:
+          type: array
+          description: Filter by order IDs
+          items:
+            $ref: '#/components/schemas/OrderId'
+        status:
+          $ref: '#/components/schemas/FiscalQueueStatusType'
+        fromModifiedAt:
+          type: string
+          description: Filter from modification date
+          example: "2024-01-01T00:00:00Z"
+        toModifiedAt:
+          type: string
+          description: Filter to modification date
+          example: "2024-01-31T23:59:59Z"
+      required:
+        - header
+
+    GetOrderFiscalQueueResponse:
+      type: object
+      description: Response containing order fiscal queue items
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        fiscalOrderQueueItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiscalOrderQueueItem'
+      required:
+        - status
+
+    # ==========================================================================
+    # PARTNER ENUMS
+    # ==========================================================================
+
+    MediumBookingType:
+      type: string
+      description: Type of medium booking
+      enum:
+        - DEBIT
+        - CREDIT
+      example: "DEBIT"
+
+    # ==========================================================================
+    # FISCALIZATION ENUMS
+    # ==========================================================================
+
+    FiscalJournalType:
+      type: string
+      description: Type of fiscal journal export
+      enum:
+        - DAILY
+        - MONTHLY
+        - YEARLY
+        - CUSTOM
+      example: "DAILY"
+
+    FiscalCommandType:
+      type: string
+      description: Type of fiscal command
+      enum:
+        - DAILY_CLOSING
+        - MONTHLY_CLOSING
+        - YEARLY_CLOSING
+        - START_RECEIPT
+        - END_RECEIPT
+      example: "DAILY_CLOSING"
+
+    FiscalQueueStatusType:
+      type: string
+      description: Status of a fiscal queue item
+      enum:
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - FAILED
+        - RETRY
+      example: "PENDING"
+
+    # ==========================================================================
+    # PERMISSIONS
+    # ==========================================================================
+    # Permissions are encoded as a 32-bit integer. Each bit represents a 
+    # permission for the user. 0 = denied, 1 = granted.
+    #
+    # BIT  Permission
+    # =========================================================================
+    # 1    Open Order
+    # 2    Create invoice
+    # 3    Book articles
+    # 4    Cancel booking
+    # 5    Cancel invoice
+    # 6    Change transaction type for booking
+    # 7    Change payment type for existing invoice
+    # 8    Change transaction type for existing invoice
+    # 9    Prebook articles
+    # 10   Access POS maintenance functions
+    # 11   Change order id
+    # 12   Split order
+    # 13   Select outlet on invoice creation
+    # 14   Input tip
+    # 15   Show created invoices
+    # 16   Fetch orders from other user
+    # 17   Fetch orders from other outlet
+    # 18   Change point of sale
+    # 19   Access POS system functions
+    # 20   Guest information from partner
+    # 21   Card information from partner
+    # 22   Voucher information from partner
+    # 23   Show older invoices (older than today)
+    # 24   Instant cancellation for bookings and prebooked articles
+    # 25   Allow negative values for manual price changes
+    # 26   Allow printing of preview invoices
+    # 27   Allow booking when stock amount is zero
+    # 28   Allow negative quantity for bookings
+    # 29   Allow zero for guest count
+    # 30   Allow switching to table booking from Self-Service
+    # =========================================================================
