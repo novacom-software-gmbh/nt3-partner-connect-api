@@ -28,6 +28,24 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GetMediumsRequest'
+            examples:
+              General:
+                value:
+                  clientId: string
+                  mediums: 
+                    - id: string
+                      type: UNKNOWN
+                      data: string
+                      inputType: UNKNOWN
+                  searchData: string
+              Payment medium:
+                value:
+                  clientId: 1001
+                  mediums: 
+                    - id: 13xe132eb43de9
+                      inputType: NFC
+                  searchData: 
+                    roomNumber: 101
       responses:
         '200':
           description: Successful response
@@ -52,6 +70,275 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BookMediumRequest'
+            examples:
+              General:
+                value:
+                  clientId: string
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: string
+                      amount: 0
+                      medium:
+                        id: string
+                        type: UNKNOWN
+                        data: string
+                        inputType: UNKNOWN
+                      currency: string
+                      isTip: true
+                  items: 
+                    - id: string
+                      name: string
+                      groupId: string
+                      quantity: 0
+                      amount: 0
+                      discount: 0
+                      taxPercent: 0
+                      currency: string
+                      taxType: UNKNOWN
+                      isTip: true
+                  invoiceId: string
+                  transactionId: string
+                  isCancellation: false
+              Payment Hotel, Access, etc.:
+                value:
+                  clientId: 1001
+                  bookingType: DEBIT
+                  payments:
+                    - id: 4
+                      amount: 3.50
+                      medium:
+                        id: 13132439
+                        inputType: UNKNOWN
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 10001
+                      name: CocaCola 0,33l
+                      groupId: 2AFG
+                      quantity: 1
+                      amount: 3.50
+                      discount: 0
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Payment Voucher (always without items):
+                value:
+                  clientId: 1001
+                  bookingType: DEBIT
+                  payments:
+                    - id: 20
+                      amount: 3.50
+                      medium:
+                        id: 13xe132eb43de9
+                        inputType: UNKNOWN
+                      currency: EUR
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - Without TIP and Discount:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 1
+                      amount: 3.50
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 10001
+                      name: CocaCola 0,33l
+                      groupId: 2AFG
+                      quantity: 1
+                      amount: 3.50
+                      discount: 0
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - With TIP:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 10
+                      amount: 3.50
+                      currency: EUR
+                      isTip: false
+                    - id: 10
+                      amount: 2.00
+                      currency: EUR
+                      itTip: true
+                  items: 
+                    - id: 10001
+                      name: CocaCola 0,33l
+                      groupId: 2AFG
+                      quantity: 1
+                      amount: 3.50
+                      discount: 0
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                    - id: 99001
+                      name: Trinkgeld
+                      groupId: 9TIP
+                      quantity: 1
+                      amount: 2
+                      discount: 0
+                      taxPercent: 0
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: true
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - With Discount:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 1
+                      amount: 3.00
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 10001
+                      name: CocaCola 0,33l
+                      groupId: 2AFG
+                      quantity: 1
+                      amount: 3.50
+                      discount: 0.50
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - Payment split:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 1
+                      amount: 5.00
+                      currency: EUR
+                      isTip: false
+                    - id: 20
+                      amount: 10.00
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 11001
+                      name: Wiener Schnitzel
+                      groupId: 1KUE
+                      quantity: 2
+                      amount: 15.00
+                      discount: 0
+                      taxPercent: 10
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - Article split:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 1
+                      amount: 3.75
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 11001
+                      name: Wiener Schnitzel
+                      groupId: 1KUE
+                      quantity: 0.5
+                      amount: 3.75
+                      discount: 0
+                      taxPercent: 10
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - More items per transaction and different taxes:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 1
+                      amount: 37.70
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 10001
+                      name: CocaCola 0,33l
+                      groupId: 2AFG
+                      quantity: 1
+                      amount: 3.50
+                      discount: 0
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                    - id: 10002
+                      name: Espresso
+                      groupId: 2HGE
+                      quantity: 1
+                      amount: 4.20
+                      discount: 0
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                    - id: 11001
+                      name: Wiener Schnitzel
+                      groupId: 1KUE
+                      quantity: 2
+                      amount: 15.00
+                      discount: 0
+                      taxPercent: 10
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1234
+                  transactionId: 2578
+                  isCancellation: false
+              Revenue Transfer - Cancellation:
+                value:
+                  clientId: 1001
+                  bookingType: UNKNOWN
+                  payments:
+                    - id: 1
+                      amount: 3.50
+                      currency: EUR
+                      isTip: false
+                  items: 
+                    - id: 10001
+                      name: CocaCola 0,33l
+                      groupId: 2AFG
+                      quantity: 1
+                      amount: 3.50
+                      discount: 0
+                      taxPercent: 20
+                      currency: EUR
+                      taxType: NORMAL
+                      isTip: false
+                  invoiceId: 1235
+                  transactionId: 2579
+                  isCancellation: true
       responses:
         '200':
           description: Successful response
