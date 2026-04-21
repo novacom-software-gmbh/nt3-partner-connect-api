@@ -36,6 +36,9 @@ Your server must implement both endpoints:
 - Handle concurrent requests appropriately
 - Maintain accurate balance calculations
 
+### Examples
+The examples folder contains additional collections for [Insomnia](https://insomnia.rest/download) to query the NovaTouch database endpoint.
+
 ## Support
 
 For technical support and integration assistance:
@@ -45,7 +48,7 @@ For technical support and integration assistance:
 
 ## License
 
-Copyright (c) 2025 novacom software GmbH.
+Copyright (c) 2026 novacom software GmbH.
 Please contact partner-connect@novacom.at for further licensing details.
 
 RESTRICTIONS:

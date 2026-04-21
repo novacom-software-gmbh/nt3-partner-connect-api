@@ -1,0 +1,298 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: nt3ss_001_simple_booking_with_invoice_col
+meta:
+  id: wrk_8af932c3866d482086a09ec7ca2afedc
+  created: 1776677445570
+  modified: 1776776080316
+  description: ""
+collection:
+  - url: "{{host}}/api/v1/check/service"
+    name: CheckService
+    meta:
+      id: req_d1f2acbbf4824c6c91dd6be09fbb5c8a
+      created: 1776677445579
+      modified: 1776679110941
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445579
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{host}}/api/v1/authorization/authorize"
+    name: Authorize
+    meta:
+      id: req_055c5093af3440b5b39944748541e31d
+      created: 1776681511694
+      modified: 1776682452785
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445479
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"apiKey": "{{ _.apiKey }}",
+        	"deviceData": "{\"appName\":\"Insomnia\"}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    scripts:
+      afterResponse: >+
+        const jsonBody = insomnia.response.json();
+
+        insomnia.environment.set("authorizationToken",
+        jsonBody.authorizationToken);
+
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{host}}/api/v1/authorization/login"
+    name: Login
+    meta:
+      id: req_db500a4aa0f046f68dc3f8ab01630412
+      created: 1776682287066
+      modified: 1776682741058
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445379
+    method: POST
+    body:
+      mimeType: application/json
+      text: '{"header":{"authorizationToken":"{{ _.authorizationToken
+        }}","pointOfSaleId":"{{ _.pointOfSaleId }}","requestDebugLog":{{
+        _.requestDebugLog }}},"passcode":"{{ _.passcode
+        }}","type":"LOGINTYPE_PIN"}'
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    scripts:
+      afterResponse: |
+        const jsonBody = insomnia.response.json();
+        insomnia.environment.set("loginToken", jsonBody.loginToken);
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{host}}/api/v1/booking/openorder"
+    name: OpenOrder
+    meta:
+      id: req_12389adf75934562a6456482374ea878
+      created: 1776682586635
+      modified: 1776682917653
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445279
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"header": {
+        		"authorizationToken": "{{ _.authorizationToken }}",
+        		"loginToken": "{{ _.loginToken }}",
+        		"pointOfSaleId": "{{ _.pointOfSaleId }}",
+        		"requestDebugLog": {{ _.requestDebugLog }}
+        	},
+        	"orderId": "{{ _.orderId }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{host}}/api/v1/booking/closeorder"
+    name: CloseOrder
+    meta:
+      id: req_93f74d3e217644508e3ff934306ee49e
+      created: 1776682929372
+      modified: 1776682938648
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445229
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"header": {
+        		"authorizationToken": "{{ _.authorizationToken }}",
+        		"loginToken": "{{ _.loginToken }}",
+        		"pointOfSaleId": "{{ _.pointOfSaleId }}",
+        		"requestDebugLog": {{ _.requestDebugLog }}
+        	},
+        	"orderId": "{{ _.orderId }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{host}}/api/v1/booking/bookorderitems"
+    name: BookOrderItems
+    meta:
+      id: req_a38788b47c4643749ef7b10cecb53fc0
+      created: 1776683138176
+      modified: 1776684142089
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445254
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"header": {
+        		"authorizationToken": "{{ _.authorizationToken }}",
+        		"loginToken": "{{ _.loginToken }}",
+        		"pointOfSaleId": "{{ _.pointOfSaleId }}",
+        		"requestDebugLog": false
+        	},
+        	"orderId": "{{ _.orderId }}",
+        	"items": [
+        		{
+        			"articleId": "31625",
+        			"name": "Cola",
+        			"quantity": 1.0,
+        			"price": 4
+        		}
+        	]
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{host}}/api/v1/booking/createinvoice"
+    name: CreateInvoice
+    meta:
+      id: req_9638b30bde3c4e56986dfc4c9f83a1b1
+      created: 1776683444577
+      modified: 1776684165625
+      isPrivate: false
+      description: ""
+      sortKey: -1776677445241.5
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"header": {
+        		"authorizationToken": "{{ _.authorizationToken }}",
+        		"loginToken": "{{ _.loginToken }}",
+        		"pointOfSaleId": "{{ _.pointOfSaleId }}",
+        		"requestDebugLog": {{ _.requestDebugLog }}
+        	},
+        	"orderId": "{{ _.orderId }}",
+        	"payments": [
+        		{
+        			"paymentTypeId": "1",
+        			"amount": 4
+        		}
+        	],
+        	"items": [
+        		{
+        			"articleId": "31625",
+        			"name": "Cola",
+        			"quantity": 1.0,
+        			"price": 4.0
+        		}
+        	]
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.5.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_f127f1bbe1aa298624422da2d9b6625562b91724
+    created: 1776677445576
+    modified: 1776774047093
+environments:
+  name: Base Environment
+  meta:
+    id: env_f127f1bbe1aa298624422da2d9b6625562b91724
+    created: 1776677445574
+    modified: 1776774047095
+    isPrivate: false
+  data:
+    authorization-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjEwMDEiLCJleHAiOjE3NzY3NjE0NTEsImFwaUtleSI6Ijc4OSJ9.eH9iajikLXvfz-AbEYHoeCQONvMhOJVhLz5fVHMaCz0
+    authorizationToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjEwMDEiLCJleHAiOjE3NzY4NTMyNDcsImFwaUtleSI6Ijc4OSJ9.XCiXrCF_FX9V3Vsbz0rlV42BlsBT7Orq65G8y5f39oU
+    loginToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5ODciLCJleHAiOjE3NzY4NTMyNDcsImJhc2ljUGVybWlzc2lvbnMiOjEwNzM3NDE4MjMsInNlc3Npb25JZCI6IjA0M2VmNzhlLTczZDctNGQwMy1hODU2LWVlNmJhM2FlODU2NSJ9.35TmbJtXm9cK5Mbo-7PeJKP2o40vjstJhJyaPGNn2tY
