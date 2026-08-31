@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: POS API
+  description: Point of Sale API for managing orders, invoices, and system operations
+  version: 1.0.0
+  contact:
+    name: NovaTouch® Partner.Connect
+    email: partner-connect@novacom.at
+    url: https://www.novacom.at/de/
+
+servers:
+  - url: https://api.example.com/api/v1
+    description: Production server (placeholder - update with actual server URL)
+
+tags:
+  - name: Authentication
+    description: Device authorization and user authentication endpoints
+
+security:
+  - AuthorizationToken: []
+  - LoginToken: []
+
+paths:
+  # ============================================================================
+  # AUTHENTICATION ENDPOINTS
+  # ============================================================================
+
+  /authorization/authorize:
+    post:
+      tags:
+        - Authentication
+      summary: Authorize device
+      description: |
+        Authorizes a device to use the POS system. Returns an authorization token containing:
+        - Permissions for this device
+        - Customer ID
+        - Client ID
+      operationId: authorize
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeRequest'
+      responses:
+        '200':
+          description: Authorization response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized - invalid API key
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    AuthorizationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Device authorization token obtained from the /authorization/authorize endpoint
+
+    LoginToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User login token obtained from the /authorization/login endpoint
+
+  schemas:
+    # ==========================================================================
+    # COMMON SCHEMAS
+    # ==========================================================================
+
+    Status:
+      type: object
+      description: Standard status response included in all API responses
+      properties:
+        code:
+          type: integer
+          description: Status code (0 for success, non-zero for errors)
+          example: 0
+        message:
+          type: string
+          description: Human-readable status message
+          example: "Success"
+      required:
+        - code
+
+    # ==========================================================================
+    # AUTHENTICATION SCHEMAS
+    # ==========================================================================
+
+    AuthorizeRequest:
+      type: object
+      description: Request to authorize a device
+      properties:
+        apiKey:
+          type: string
+          description: API key for device authorization
+          example: "ak_live_xxxxxxxxxxxxx"
+      required:
+        - apiKey
+
+    AuthorizeResponse:
+      type: object
+      description: Response from device authorization
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        authorizationToken:
+          type: string
+          description: JWT token containing device permissions, point of sale ID, user ID, client ID, apiKey
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      required:
+        - status
+
+
+
+    # ==========================================================================
+    # PERMISSIONS
+    # ==========================================================================
+    # Permissions are encoded as a 32-bit integer. Each bit represents a 
+    # permission for the user. 0 = denied, 1 = granted.
+    #
+    # BIT  Permission
+    # =========================================================================
+    # 1    Open Order
+    # 2    Create invoice
+    # 3    Book articles
+    # 4    Cancel booking
+    # 5    Cancel invoice
+    # 6    Change transaction type for booking
+    # 7    Change payment type for existing invoice
+    # 8    Change transaction type for existing invoice
+    # 9    Prebook articles
+    # 10   Access POS maintenance functions
+    # 11   Change order id
+    # 12   Split order
+    # 13   Select outlet on invoice creation
+    # 14   Input tip
+    # 15   Show created invoices
+    # 16   Fetch orders from other user
+    # 17   Fetch orders from other outlet
+    # 18   Change point of sale
+    # 19   Access POS system functions
+    # 20   Guest information from partner
+    # 21   Card information from partner
+    # 22   Voucher information from partner
+    # 23   Show older invoices (older than today)
+    # 24   Instant cancellation for bookings and prebooked articles
+    # 25   Allow negative values for manual price changes
+    # 26   Allow printing of preview invoices
+    # 27   Allow booking when stock amount is zero
+    # 28   Allow negative quantity for bookings
+    # 29   Allow zero for guest count
+    # 30   Allow switching to table booking from Self-Service
+    # =========================================================================
