@@ -15,6 +15,8 @@ servers:
 tags:
   - name: Authentication
     description: Device authorization and user authentication endpoints
+  - name: Booking
+    description: Order management
 
 security:
   - AuthorizationToken: []
@@ -57,6 +59,39 @@ paths:
         '500':
           description: Internal server error
 
+  # ============================================================================
+  # BOOKING ENDPOINTS
+  # ============================================================================
+
+  /booking/order:
+    post:
+      tags:
+        - Booking
+      summary: Book order items
+      description: Adds items to an order.
+      operationId: order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Items booked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
 components:
   securitySchemes:
     AuthorizationToken:
@@ -64,13 +99,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: Device authorization token obtained from the /authorization/authorize endpoint
-
-    LoginToken:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: User login token obtained from the /authorization/login endpoint
-
+  
   schemas:
     # ==========================================================================
     # COMMON SCHEMAS
@@ -80,16 +109,107 @@ components:
       type: object
       description: Standard status response included in all API responses
       properties:
-        code:
+        statusType:
           type: integer
-          description: Status code (0 for success, non-zero for errors)
-          example: 0
+          description: Status Type (1 for OK)
+          enum:
+          - 0 = STATUSTYPE_UNKNOWN
+          - 1 = STATUSTYPE_OK
+          - 2 = STATUSTYPE_ERROR
+          - 3 = STATUSTYPE_WARNING
+          example: 1
+        statusMessageType:
+          type: integer
+          description: Status Message Type (100 for success)
+          enum:
+          - 0 = STATUSMESSAGETYPE_UNKNOWN
+          - 100 = STATUSMESSAGETYPE_SUCCESS
+          - 101 = STATUSMESSAGETYPE_SUCCESS_PRICES_MODIFIED
+          - 102 = STATUSMESSAGETYPE_SUCCESS_PRICES_NOT_MODIFIED
+          - 200 = STATUSMESSAGETYPE_ERROR
+          - 300 = STATUSMESSAGETYPE_WARNING
+          - 301 = STATUSMESSAGETYPE_WARNING_MESSAGE_WAS_ALREADY_SENT
+          - 1000 = STATUSMESSAGETYPE_ERROR_PARAMETER
+          - 1001 = STATUSMESSAGETYPE_ERROR_PARAMETER_MISSING
+          - 1002 = STATUSMESSAGETYPE_ERROR_PARAMETER_INVALID
+          - 2000 = STATUSMESSAGETYPE_ERROR_AUTH
+          - 2001 = STATUSMESSAGETYPE_ERROR_AUTH_USER_NOT_FOUN
+          - 2002 = STATUSMESSAGETYPE_ERROR_AUTH_PIN_MISSING
+          - 2003 = STATUSMESSAGETYPE_ERROR_AUTH_PIN_INVALID
+          - 2004 = STATUSMESSAGETYPE_ERROR_AUTH_AUTHORIZATION_TOKEN_MISSING
+          - 2005 = STATUSMESSAGETYPE_ERROR_AUTH_AUTHORIZATION_TOKEN_INVALID
+          - 2006 = STATUSMESSAGETYPE_ERROR_AUTH_AUTHORIZATION_TOKEN_EXPIRED
+          - 2007 = STATUSMESSAGETYPE_ERROR_AUTH_LOGIN_TOKEN_MISSING
+          - 2008 = STATUSMESSAGETYPE_ERROR_AUTH_LOGIN_TOKEN_INVALID
+          - 2009 = STATUSMESSAGETYPE_ERROR_AUTH_LOGIN_TOKEN_EXPIRED
+          - 3000 = STATUSMESSAGETYPE_ERROR_FISCALIZATION
+          - 3001 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_OUT_OF_SERVICE
+          - 3002 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_TEMPORARY_OUT_OF_SERVICE
+          - 3003 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_PERMANENTLY_OUT_OF_SERVICE
+          - 3004 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_SUBSEQUENT_ENTRY_ACTIVATED
+          - 3005 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_MONTHLY_REPORT_DUE
+          - 3006 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_ANNUAL_REPORT_DUE 
+          - 3007 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_MESSAGE_PENDING
+          - 3008 = STATUSMESSAGETYPE_ERROR_FISCALIZATION_BACKUP_DEVICE_IN_USE
+          - 4000 = STATUSMESSAGETYPE_ERROR_PERMISSION
+          - 4001 = STATUSMESSAGETYPE_ERROR_PERMISSION_OPEN_ORDER
+          - 4002 = STATUSMESSAGETYPE_ERROR_PERMISSION_CREATE_INVOICE
+          - 4003 = STATUSMESSAGETYPE_ERROR_PERMISSION_BOOK_ARTICLES
+          - 4004 = STATUSMESSAGETYPE_ERROR_PERMISSION_CANCEL_BOOKING
+          - 4005 = STATUSMESSAGETYPE_ERROR_PERMISSION_CANCEL_INVOICE
+          - 4006 = STATUSMESSAGETYPE_ERROR_PERMISSION_CHANGE_TRANSACTION_TYPE_BOOKING
+          - 4007 = STATUSMESSAGETYPE_ERROR_PERMISSION_CHANGE_PAYMENT_TYPE_INVOICE
+          - 4008 = STATUSMESSAGETYPE_ERROR_PERMISSION_CHANGE_TRANSACTION_TYPE_INVOICE
+          - 4009 = STATUSMESSAGETYPE_ERROR_PERMISSION_PREBOOK_ARTICLES
+          - 4010 = STATUSMESSAGETYPE_ERROR_PERMISSION_ACCESS_POS_MAINTENANCE_FUNCTIONS
+          - 4011 = STATUSMESSAGETYPE_ERROR_PERMISSION_CHANGE_ORDER_ID
+          - 4012 = STATUSMESSAGETYPE_ERROR_PERMISSION_SPLIT_ORDER
+          - 4013 = STATUSMESSAGETYPE_ERROR_PERMISSION_SELECT_OUTLET_ON_INVOICE_CREATION
+          - 4014 = STATUSMESSAGETYPE_ERROR_PERMISSION_INPUT_TIP
+          - 4015 = STATUSMESSAGETYPE_ERROR_PERMISSION_SHOW_CREATED_INVOICES
+          - 4016 = STATUSMESSAGETYPE_ERROR_PERMISSION_FETCH_ORDERS_FROM_OTHER_USER
+          - 4017 = STATUSMESSAGETYPE_ERROR_PERMISSION_FETCH_ORDERS_FROM_OTHER_OUTLET
+          - 4018 = STATUSMESSAGETYPE_ERROR_PERMISSION_CHANGE_POINT_OF_SALE
+          - 4019 = STATUSMESSAGETYPE_ERROR_PERMISSION_ACCESS_POS_SYSTEM_FUNCTIONS
+          - 4020 = STATUSMESSAGETYPE_ERROR_PERMISSION_GUEST_INFORMATION_FROM_PARTNER
+          - 4021 = STATUSMESSAGETYPE_ERROR_PERMISSION_CARD_INFORMATION_FROM_PARTNER
+          - 4022 = STATUSMESSAGETYPE_ERROR_PERMISSION_VOUCHER_INFORMATION_FROM_PARTNER
+          - 4023 = STATUSMESSAGETYPE_ERROR_PERMISSION_SHOW_OLDER_INVOICES
+          - 4024 = STATUSMESSAGETYPE_ERROR_PERMISSION_NEGATIVE_VALUES_FOR_MANUAL_PRICE
+          - 4031 = STATUSMESSAGETYPE_ERROR_PERMISSION_FISCAL_MANAGEMENT
+          - 5000 = STATUSMESSAGETYPE_ERROR_BOOKING
+          - 5001 = STATUSMESSAGETYPE_ERROR_BOOKING_ORDER_LOCKED_BY_POS
+          - 5002 = STATUSMESSAGETYPE_ERROR_BOOKING_ORDER_NOT_FOUND
+          - 5003 = STATUSMESSAGETYPE_ERROR_BOOKING_ORDER_LOCKED_BY_USER
+          - 5004 = STATUSMESSAGETYPE_ERROR_BOOKING_ORDER_ROOM_NOT_OCCUPIED
+          - 6001 = STATUSMESSAGETYPE_ERROR_INVOICE_PAYMENT_MISMATCH
+          - 7000 = STATUSMESSAGETYPE_ERROR_PARTNER
+          - 7001 = STATUSMESSAGETYPE_ERROR_PARTNER_RESPONSE
+          - 7002 = STATUSMESSAGETYPE_ERROR_PARTNER_PARAMETER_MISSING
+          - 7003 = STATUSMESSAGETYPE_ERROR_PARTNER_CONFIG_NOT_FOUND
+          - 7004 = STATUSMESSAGETYPE_ERROR_PARTNER_COMMUNICATION_ERROR
+          - 7005 = STATUSMESSAGETYPE_ERROR_PARTNER_MEDIUM_NOT_ALLOWED
+          - 7006 = STATUSMESSAGETYPE_ERROR_PARTNER_MEDIUM_INSUFFICIENT_BALANCE
+          - 7007 = STATUSMESSAGETYPE_ERROR_PARTNER_MEDIUM_DOES_NOT_EXIST
+          - 7008 = STATUSMESSAGETYPE_ERROR_PARTNER_MEDIUM_NOT_ACTIVATED
+          example: 100
         message:
           type: string
           description: Human-readable status message
           example: "Success"
       required:
         - code
+
+    Header:
+      type: object
+      description: Standard request header included in authenticated requests
+      properties:
+        authorizationToken:
+          type: string
+          description: JWT token containing user permissions, point of sale ID, user ID, client ID, apiKey, expiration Date
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      required:
+        - authorizationToken
 
     # ==========================================================================
     # AUTHENTICATION SCHEMAS
@@ -114,12 +234,151 @@ components:
           $ref: '#/components/schemas/Status'
         authorizationToken:
           type: string
-          description: JWT token containing device permissions, point of sale ID, user ID, client ID, apiKey
+          description: JWT token containing user permissions, point of sale ID, user ID, client ID, apiKey, expiration Date
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       required:
         - status
 
+    # ==========================================================================
+    # ORDER REQUEST/RESPONSE SCHEMAS
+    # ==========================================================================
 
+    OrderRequest:
+      type: object
+      description: Opens an existing order or creates a new one to add items on. Can optionally associate the order with a partner (e.g., hotel room).
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        order:
+          $ref: '#/components/schemas/Order'
+        items:
+          type: array
+          description: Items to book
+          items:
+            $ref: '#/components/schemas/OrderItem' 
+      required:
+        - header
+        - order
+        - items
+
+    OrderResponse:
+      type: object
+      description: Response after booking items
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - status
+
+    # ==========================================================================
+    # ORDER SCHEMAS
+    # ==========================================================================
+
+    Order:
+      type: object
+      description: |
+        Order to open (creates new if not specified)
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the order
+          example: "101"
+        name:
+          type: string
+          description: Ordername, e.g. a regular customer, reservation, etc.
+          example: "Max Mustermann"
+        bookedAt:
+          type: string
+          description: |
+                      Timestamp for the order.
+                      - actual timestamp = The order is booked immediately
+                      - specific timestamp = The order is booked at the specified time
+                      - no timestamp = The order is only pre-ordered on the POS
+          example: "2024-01-01T00:00:00Z"
+        mediums:
+          $ref: '#/components/schemas/Mediums'
+      required:
+        - id
+
+    # ==========================================================================
+    # BOOKING SCHEMAS
+    # ==========================================================================
+
+    OrderItem:
+      type: object
+      description: Item within an order
+      properties:
+        articleId:
+          type: string
+          description: Article ID
+          example: "1001"
+        name:
+          type: string
+          description: Name of the item
+          example: "Cheeseburger"
+        quantity:
+          type: number
+          format: double
+          description: Quantity ordered
+          example: 2.0
+        price:
+          type: number
+          format: double
+          description: Price per item (without discount/grant, happy hour already applied)
+          example: 12.50
+        modifiers:
+          type: array
+          description: Modifiers applied to this item
+          items:
+            $ref: '#/components/schemas/Modifier' 
+      required:
+        - articleId
+
+    Modifier:
+      type: object
+      description: |
+                    - If the modifier exists in Novacom, it must have an Item ID.
+                      If the modifier has an Item ID, a price can also be assigned to it.
+                    - If the modifier does not exist in Novacom, only the name is required. In this case, the modifier is manually provided by the partner system and the price must remain empty.
+                      The modifier will then appear on the receipt when the order is posted, but not on the invoice and it will not be stored in Novacom.
+      properties:
+        articleId:
+          type: string
+          description: Article ID of the modifier
+          example: "9001"
+        name:
+          type: string
+          description: Name of the modifier
+          example: "Extra Cheese"
+        price:
+          type: number
+          format: double
+          description: Price of the modifier
+          example: 1.50
+
+    # ==========================================================================
+    # PARTNER SCHEMAS
+    # ==========================================================================
+
+    Mediums:
+      type: object
+      description: Partner medium - Hotel, Voucher, Access, etc.
+      properties:
+        id:
+          type: string
+          description: |
+                        Unique identifier of the medium, e.g. 
+                        - room number for hotel, 
+                        - chip id for access partner, 
+                        - QR code for voucher, etc.
+          example: "101"
+        partnerId:
+          type: string
+          description: Unique identifier of the partner in Novacom (is specified by Novacom)
+          example: "GrandHotelPMS"
+      required:
+        - id
+        - partnerId
 
     # ==========================================================================
     # PERMISSIONS
@@ -159,4 +418,5 @@ components:
     # 28   Allow negative quantity for bookings
     # 29   Allow zero for guest count
     # 30   Allow switching to table booking from Self-Service
+    # 31   Fiscal managerment access
     # =========================================================================
