@@ -234,7 +234,7 @@ components:
           $ref: '#/components/schemas/Status'
         authorizationToken:
           type: string
-          description: JWT token containing user permissions, point of sale ID, user ID, client ID, apiKey, expiration Date
+          description: JWT token containing user permissions, point of sale ID, user ID, client ID, session ID, apiKey, expiration Date
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       required:
         - status
@@ -267,6 +267,10 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/Status'
+        orderId:
+          type: string
+          description: Unique identifier of the order
+          example: "101"
       required:
         - status
 
@@ -281,24 +285,18 @@ components:
       properties:
         id:
           type: string
-          description: Unique identifier of the order
+          description: Unique identifier of the order if available
           example: "101"
         name:
           type: string
           description: Ordername, e.g. a regular customer, reservation, etc.
           example: "Max Mustermann"
-        bookedAt:
+        bookAt:
           type: string
-          description: |
-                      Timestamp for the order.
-                      - actual timestamp = The order is booked immediately
-                      - specific timestamp = The order is booked at the specified time
-                      - no timestamp = The order is only pre-ordered on the POS
+          description: If set, the order will be booked at the given timestamp.
           example: "2024-01-01T00:00:00Z"
-        mediums:
-          $ref: '#/components/schemas/Mediums'
-      required:
-        - id
+        medium:
+          $ref: '#/components/schemas/Medium'
 
     # ==========================================================================
     # BOOKING SCHEMAS
@@ -326,6 +324,10 @@ components:
           format: double
           description: Price per item (without discount/grant, happy hour already applied)
           example: 12.50
+        isPreorder:
+          type: boolean
+          description: If set, the item is only preordered and has to be processed manually on the POS.
+          example: true
         modifiers:
           type: array
           description: Modifiers applied to this item
@@ -336,11 +338,7 @@ components:
 
     Modifier:
       type: object
-      description: |
-                    - If the modifier exists in Novacom, it must have an Item ID.
-                      If the modifier has an Item ID, a price can also be assigned to it.
-                    - If the modifier does not exist in Novacom, only the name is required. In this case, the modifier is manually provided by the partner system and the price must remain empty.
-                      The modifier will then appear on the receipt when the order is posted, but not on the invoice and it will not be stored in Novacom.
+      description: Each property can be provided on its own or in combination with one or more other properties. If an item number is provided, it must exist in Novacom.
       properties:
         articleId:
           type: string
@@ -360,9 +358,9 @@ components:
     # PARTNER SCHEMAS
     # ==========================================================================
 
-    Mediums:
+    Medium:
       type: object
-      description: Partner medium - Hotel, Voucher, Access, etc.
+      description: Assigned partner medium - Hotel, Voucher, Access, etc.
       properties:
         id:
           type: string
@@ -374,11 +372,10 @@ components:
           example: "101"
         partnerId:
           type: string
-          description: Unique identifier of the partner in Novacom (is specified by Novacom)
+          description: Unique identifier of the partnersystem as specified by novacom
           example: "GrandHotelPMS"
       required:
         - id
-        - partnerId
 
     # ==========================================================================
     # PERMISSIONS
