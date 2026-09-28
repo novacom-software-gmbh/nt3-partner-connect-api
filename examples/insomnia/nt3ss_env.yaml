@@ -2,23 +2,23 @@ type: environment.insomnia.rest/5.0
 schema_version: "5.1"
 name: nt3ss_env
 meta:
-  id: wrk_64aab9cf6278469db85963525f6ada25
-  created: 1776677974394
-  modified: 1776688103696
+  id: wrk_28eca60585f34b69872cd53f6df45a91
+  created: 1776839789130
+  modified: 1776839789130
   description: ""
 environments:
   name: nt3-server-suite
   meta:
-    id: env_cebe0a6a89acd540bb98f7252a616803861c8813
+    id: env_6ba2e845059f49c7b852e5ab3312e836
     created: 1776677974399
-    modified: 1776774047096
+    modified: 1778069816055
     isPrivate: false
   data:
-    host: https://127.0.0.1:31502
-    apiKey: "789"
+    host: https://10.1.80.62:31600
+    apiKey: "123456"
     passcode: "987"
-    authorizationToken: "123"
-    loginToken: "456"
-    pointOfSaleId: RK2
+    authorizationToken: TESTSK
+    loginToken: "987654"
+    pointOfSaleId: RK1
     requestDebugLog: "true"
-    orderId: "6"
+    orderId: "1"

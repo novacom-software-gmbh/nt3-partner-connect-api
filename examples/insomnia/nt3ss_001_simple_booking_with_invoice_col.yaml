@@ -2,17 +2,17 @@ type: collection.insomnia.rest/5.0
 schema_version: "5.1"
 name: nt3ss_001_simple_booking_with_invoice_col
 meta:
-  id: wrk_8af932c3866d482086a09ec7ca2afedc
-  created: 1776677445570
-  modified: 1776776080316
+  id: wrk_2411bb02ff64493d93cff4b98aa9b7b3
+  created: 1776839651540
+  modified: 1776839651540
   description: ""
 collection:
   - url: "{{host}}/api/v1/check/service"
     name: CheckService
     meta:
-      id: req_d1f2acbbf4824c6c91dd6be09fbb5c8a
+      id: req_c8103c2dda15424b916ac7999d9bcbe2
       created: 1776677445579
-      modified: 1776679110941
+      modified: 1778069255031
       isPrivate: false
       description: ""
       sortKey: -1776677445579
@@ -38,9 +38,9 @@ collection:
   - url: "{{host}}/api/v1/authorization/authorize"
     name: Authorize
     meta:
-      id: req_055c5093af3440b5b39944748541e31d
+      id: req_c1884140580f448fabdd7c386ac6a3d5
       created: 1776681511694
-      modified: 1776682452785
+      modified: 1778069472545
       isPrivate: false
       description: ""
       sortKey: -1776677445479
@@ -77,9 +77,9 @@ collection:
   - url: "{{host}}/api/v1/authorization/login"
     name: Login
     meta:
-      id: req_db500a4aa0f046f68dc3f8ab01630412
+      id: req_e6b8a93c446d469b8abbd047b048cb59
       created: 1776682287066
-      modified: 1776682741058
+      modified: 1777879932500
       isPrivate: false
       description: ""
       sortKey: -1776677445379
@@ -112,7 +112,7 @@ collection:
   - url: "{{host}}/api/v1/booking/openorder"
     name: OpenOrder
     meta:
-      id: req_12389adf75934562a6456482374ea878
+      id: req_f4718ac93e044926a510d053664a20ac
       created: 1776682586635
       modified: 1776682917653
       isPrivate: false
@@ -149,7 +149,7 @@ collection:
   - url: "{{host}}/api/v1/booking/closeorder"
     name: CloseOrder
     meta:
-      id: req_93f74d3e217644508e3ff934306ee49e
+      id: req_6818bc0ae17047378c5a269cf791a6be
       created: 1776682929372
       modified: 1776682938648
       isPrivate: false
@@ -186,9 +186,9 @@ collection:
   - url: "{{host}}/api/v1/booking/bookorderitems"
     name: BookOrderItems
     meta:
-      id: req_a38788b47c4643749ef7b10cecb53fc0
+      id: req_0bc44d7dd9ed41618022a85ac3fe3469
       created: 1776683138176
-      modified: 1776684142089
+      modified: 1778069772914
       isPrivate: false
       description: ""
       sortKey: -1776677445254
@@ -206,7 +206,7 @@ collection:
         	"orderId": "{{ _.orderId }}",
         	"items": [
         		{
-        			"articleId": "31625",
+        			"articleId": "12401",
         			"name": "Cola",
         			"quantity": 1.0,
         			"price": 4
@@ -231,9 +231,9 @@ collection:
   - url: "{{host}}/api/v1/booking/createinvoice"
     name: CreateInvoice
     meta:
-      id: req_9638b30bde3c4e56986dfc4c9f83a1b1
+      id: req_c91d071b0fda4196af0ccab39420bbb4
       created: 1776683444577
-      modified: 1776684165625
+      modified: 1778069790411
       isPrivate: false
       description: ""
       sortKey: -1776677445241.5
@@ -257,7 +257,7 @@ collection:
         	],
         	"items": [
         		{
-        			"articleId": "31625",
+        			"articleId": "12401",
         			"name": "Cola",
         			"quantity": 1.0,
         			"price": 4.0
@@ -282,17 +282,17 @@ collection:
 cookieJar:
   name: Default Jar
   meta:
-    id: jar_f127f1bbe1aa298624422da2d9b6625562b91724
+    id: jar_5e5c016797ff4dc1905595daf9972982
     created: 1776677445576
-    modified: 1776774047093
+    modified: 1778069816051
 environments:
   name: Base Environment
   meta:
-    id: env_f127f1bbe1aa298624422da2d9b6625562b91724
+    id: env_e4c9b738507c432789ed29173b550704
     created: 1776677445574
-    modified: 1776774047095
+    modified: 1778069816053
     isPrivate: false
   data:
     authorization-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjEwMDEiLCJleHAiOjE3NzY3NjE0NTEsImFwaUtleSI6Ijc4OSJ9.eH9iajikLXvfz-AbEYHoeCQONvMhOJVhLz5fVHMaCz0
-    authorizationToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjEwMDEiLCJleHAiOjE3NzY4NTMyNDcsImFwaUtleSI6Ijc4OSJ9.XCiXrCF_FX9V3Vsbz0rlV42BlsBT7Orq65G8y5f39oU
-    loginToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5ODciLCJleHAiOjE3NzY4NTMyNDcsImJhc2ljUGVybWlzc2lvbnMiOjEwNzM3NDE4MjMsInNlc3Npb25JZCI6IjA0M2VmNzhlLTczZDctNGQwMy1hODU2LWVlNmJhM2FlODU2NSJ9.35TmbJtXm9cK5Mbo-7PeJKP2o40vjstJhJyaPGNn2tY
+    authorizationToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjEwMDEiLCJleHAiOjE3NzgxNDkxMzcsImFwaUtleSI6IjEyMzQ1NiJ9.dXVu0J-OiFgbEMqD0-k9iU1J9mXOM4Qe89gMnwiDRpE
+    loginToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5ODciLCJleHAiOjE3NzgxNDkxMzcsImJhc2ljUGVybWlzc2lvbnMiOjEwNzM3NDE4MjMsInNlc3Npb25JZCI6IjNlYjAzYjY1LWZhYmQtNDQzMS05MDNjLTg1OTlkNzRmY2MxMCJ9.diD2cuv1iiqFQf1ozbNFZ6FUZJXhe4DCVMobTZhCAAw
