@@ -20,7 +20,6 @@ tags:
 
 security:
   - AuthorizationToken: []
-  - LoginToken: []
 
 paths:
   # ============================================================================
@@ -98,7 +97,9 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Device authorization token obtained from the /authorization/authorize endpoint
+      description: |
+                    Device authorization token obtained from the /authorization/authorize endpoint;
+                    Format: Bearer <token>
   
   schemas:
     # ==========================================================================
@@ -206,7 +207,7 @@ components:
       properties:
         authorizationToken:
           type: string
-          description: JWT token containing user permissions, point of sale ID, user ID, client ID, apiKey, expiration Date
+          description: JWT token containing user permissions, point of sale ID, user ID, client ID, apiKey, session ID, partner ID, expiration Date
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       required:
         - authorizationToken
@@ -234,7 +235,7 @@ components:
           $ref: '#/components/schemas/Status'
         authorizationToken:
           type: string
-          description: JWT token containing user permissions, point of sale ID, user ID, client ID, session ID, apiKey, expiration Date
+          description: JWT token containing user permissions, point of sale ID, user ID, client ID, apiKey, session ID, partner ID, expiration Date
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       required:
         - status
@@ -247,8 +248,6 @@ components:
       type: object
       description: Opens an existing order or creates a new one to add items on. Can optionally associate the order with a partner (e.g., hotel room).
       properties:
-        header:
-          $ref: '#/components/schemas/Header'
         order:
           $ref: '#/components/schemas/Order'
         items:
@@ -257,7 +256,6 @@ components:
           items:
             $ref: '#/components/schemas/OrderItem' 
       required:
-        - header
         - order
         - items
 
