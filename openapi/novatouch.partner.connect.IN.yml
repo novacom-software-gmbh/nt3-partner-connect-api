@@ -246,7 +246,7 @@ components:
 
     OrderRequest:
       type: object
-      description: Opens an existing order or creates a new one to add items on. Can optionally associate the order with a partner (e.g., hotel room).
+      description: Creates an order to add items on. Can optionally associate the order with a partner (e.g., hotel room).
       properties:
         order:
           $ref: '#/components/schemas/Order'
@@ -293,8 +293,10 @@ components:
           type: string
           description: If set, the order will be booked at the given timestamp.
           example: "2024-01-01T00:00:00Z"
-        medium:
-          $ref: '#/components/schemas/Medium'
+        connectedIds:
+          type: array
+          items: 
+            $ref: '#/components/schemas/ConnectedId'
 
     # ==========================================================================
     # BOOKING SCHEMAS
@@ -356,14 +358,15 @@ components:
     # PARTNER SCHEMAS
     # ==========================================================================
 
-    Medium:
+    ConnectedId:
       type: object
-      description: Assigned partner medium - Hotel, Voucher, Access, etc.
+      description: Assigned id to this order
       properties:
         id:
           type: string
           description: |
-                        Unique identifier of the medium, e.g. 
+                        Unique identifier, e.g. 
+                        - table id,
                         - room number for hotel, 
                         - chip id for access partner, 
                         - QR code for voucher, etc.
@@ -372,6 +375,14 @@ components:
           type: string
           description: Unique identifier of the partnersystem as specified by novacom
           example: "GrandHotelPMS"
+        type:
+          type: string
+          description: Type of this connected id.
+          enum:
+            - HOTEL
+            - VOUCHER
+            - ACCESS
+            - TABLE
       required:
         - id
 
