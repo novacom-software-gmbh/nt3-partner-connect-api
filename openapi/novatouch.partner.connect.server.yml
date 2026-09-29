@@ -4912,7 +4912,7 @@ components:
         amount:
           type: number
           format: double
-          description: Amount per item (without discount)
+          description: Amount per item (discount already subtracted)
           example: 12.50
         discount:
           type: number

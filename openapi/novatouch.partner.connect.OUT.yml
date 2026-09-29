@@ -557,7 +557,7 @@ components:
         amount:
           type: number
           format: double
-          description: Price per single item (without discount)
+          description: Price per single item (discount already subtracted)
         discount:
           type: number
           format: double
