@@ -2315,6 +2315,10 @@ components:
           example: 0.19
         vatRateType:
           $ref: '#/components/schemas/TaxType'
+        isScaleItem:
+          type: boolean
+          description: If true, the article needs to be weighed on sale
+          example: false
       required:
         - id
         - name
